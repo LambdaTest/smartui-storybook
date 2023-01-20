@@ -1,0 +1,26 @@
+{
+  "name": "@lambdatest/smartui-storybook",
+  "version": "1.0.0",
+  "description": "LambdaTest's command-line interface (CLI) aimed to help you run your SmartUI tests on LambdaTest platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "smartui": "./index.js"
+  },
+  "keywords": [
+    "lambdatest",
+    "smartui"
+  ],
+  "author": "LambdaTest <keys@lambdatest.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.2.2",
+    "browserless": "^9.8.0",
+    "commander": "^9.5.0",
+    "form-data": "^4.0.0",
+    "lodash": "^4.17.21",
+    "puppeteer": "^19.5.2"
+  }
+}
