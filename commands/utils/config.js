@@ -9,7 +9,7 @@ const defaultSmartUIConfig = {
             [1920, 1080]
         ],
         include: [],
-        exlcude: []
+        exclude: []
     }
 };
 
