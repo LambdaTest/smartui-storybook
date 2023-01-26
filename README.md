@@ -21,7 +21,7 @@ The @lambdatest/smartui package is LambdaTest's command-line interface (CLI) aim
 
 ### Install package using npm
 ```bash
-npm install -g git@github.com:Lambdatest/smartui-storybook.git
+npm install -g @lambdatest/smartui-storybook
 ```
 
 # Usage
