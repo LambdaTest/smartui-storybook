@@ -59,7 +59,7 @@ async function storybook(url, options) {
                 }
             }
             // Capture DoM of every story and send it to renderer API
-            sendDoM(stories, storybookConfig, options);
+            sendDoM(url, stories, storybookConfig, options);
         })
         .catch(function (error) {
             if (error.response) {
