@@ -1,9 +1,9 @@
 const axios = require('axios');
 var { constants } = require('./constants');
 
-function validateProjectToken() {
+function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) { 
-        return axios.get(constants[constants.env].AUTH_URL, {
+        return axios.get(constants[options.env].AUTH_URL, {
             headers: {
                 projectToken: process.env.PROJECT_TOKEN
             }})

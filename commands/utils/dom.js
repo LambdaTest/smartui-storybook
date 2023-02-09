@@ -48,7 +48,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     form.append('browser', storybookConfig.browsers);
     form.append('projectToken', process.env.PROJECT_TOKEN);
     form.append('buildName', options.buildname);
-    axios.post(constants[constants.env].RENDER_API_URL, form, {
+    axios.post(constants[options.env].RENDER_API_URL, form, {
         headers: {
             ...form.getHeaders()
         }
