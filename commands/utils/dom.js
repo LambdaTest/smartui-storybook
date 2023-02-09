@@ -4,6 +4,7 @@ const path = require('path')
 const formData = require('form-data');
 const { JSDOM } = require("jsdom");
 var { constants } = require('./constants');
+const { getLastCommit } = require('./git')
 
 async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     const createBrowser = require('browserless')
@@ -38,16 +39,23 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     }
     await browser.close()
 
-    // Send html files to the renderer API
+    // Create form
+    let commit = await getLastCommit();
     const form = new formData();
     for (const [storyId, storyInfo] of Object.entries(stories)) {
         const file = fs.readFileSync('doms/' + storyId + '.html');
-        form.append('html', file, storyInfo.kind + ': ' + storyInfo.name + '.html');
+        form.append('files', file, storyInfo.kind + ': ' + storyInfo.name + '.html');
     }
     form.append('resolution', storybookConfig.resolutions);
     form.append('browser', storybookConfig.browsers);
     form.append('projectToken', process.env.PROJECT_TOKEN);
     form.append('buildName', options.buildname);
+    form.append('branch', commit.branch);
+    form.append('commitId', commit.shortHash);
+    form.append('commitAuthor', commit.author.name);
+    form.append('commitMessage', commit.subject);
+
+    // Send DOM to render API
     axios.post(constants[options.env].RENDER_API_URL, form, {
         headers: {
             ...form.getHeaders()
