@@ -1,6 +1,5 @@
 var constants = {}
 
-constants.env = 'prod';
 constants.stage = {
     AUTH_URL: "https://stage-api.lambdatestinternal.com/storybook/auth",
     RENDER_API_URL: "https://stage-api.lambdatestinternal.com/storybook/render"
