@@ -25,7 +25,6 @@ configCommand.command('create')
 program.command('storybook')
     .description('Snapshot Storybook stories')
     .argument('<url>', 'Storybook url')
-    .requiredOption('--buildname <string>', 'Build name')
     .option('-c --config <file>', 'Config file path')
     // .option('--env <prod|stage>', 'Runtime environment option', 'prod')
     .action(async function(url, options) {
