@@ -6,6 +6,9 @@ const { JSDOM } = require("jsdom");
 var { constants } = require('./constants');
 const { getLastCommit } = require('./git')
 
+var INTERVAL = 2000
+const MAX_INTERVAL = 512000
+
 async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     const createBrowser = require('browserless')
     const browser = createBrowser()
@@ -63,7 +66,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
         })
         .then(async function (response) {
             console.log('[smartui] Build in progress...');
-            await shortPolling(response.data.buildId, 0, 2000, 512000);
+            await shortPolling(response.data.buildId, 0, options);
         })
         .catch(function (error) {
             console.log('[smartui] Build failed: Error: ', error.message);
@@ -76,59 +79,59 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     });
 };
 
-async function shortPolling(buildId, retries = 0, interval, maxInterval) {
-    try {
-        const response = await axios.get('https://stage-api.lambdatestinternal.com/storybook/status?buildId=' + buildId, {
-            headers: {
-                projectToken: process.env.PROJECT_TOKEN
-            }
-        });
-
-        if (response.data) {
-            if (response.data.buildStatus === 'completed') {
-                console.log('[smartui] Build successful\n');
-                console.log('[smartui] Build details:\n',
-                    // 'Build URL: ', response.data.buildId, '\n',
-                    'Build Name: ', response.data.buildName, '\n',
-                    'Total Screenshots: ', response.data.screenshots.length, '\n',
-                    'Approved: ', response.data.buildResults.approved, '\n',
-                    'Changes found: ', response.data.buildResults.changesFound, '\n'
-                );
-
-                response.data.screenshots.forEach(screenshot => {
-                    console.log(screenshot.storyName, ' | Mis-match: ', screenshot.mismatchPercentage);
-                });
-
-                return;
-            } else {
-                if (response.data.screenshots.length > 0) {
-                    // TODO: show Screenshots processed 8/10 
-                    console.log('[smartui] Screenshots processed: ', response.data.screenshots.length)
+async function shortPolling(buildId, retries = 0, options) {
+    await axios.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
+        headers: {
+            projectToken: process.env.PROJECT_TOKEN
+        }})
+        .then(function (response) {
+            if (response.data) {
+                if (response.data.buildStatus === 'completed') {
+                    console.log('[smartui] Build successful\n');
+                    console.log('[smartui] Build details:\n',
+                        // 'Build URL: ', response.data.buildId, '\n',
+                        'Build Name: ', response.data.buildName, '\n',
+                        'Total Screenshots: ', response.data.screenshots.length, '\n',
+                        'Approved: ', response.data.buildResults.approved, '\n',
+                        'Changes found: ', response.data.buildResults.changesFound, '\n'
+                    );
+    
+                    response.data.screenshots.forEach(screenshot => {
+                        console.log(screenshot.storyName, ' | Mis-match: ', screenshot.mismatchPercentage);
+                    });
+    
+                    return;
+                } else {
+                    if (response.data.screenshots && response.data.screenshots.length > 0) {
+                        // TODO: show Screenshots processed 8/10 
+                        console.log('[smartui] Screenshots processed: ', response.data.screenshots.length)
+                    }
                 }
             }
-        }
-        
-        // Double the interval, up to the maximum interval of 512 secs (so ~15 mins in total)
-        interval = Math.min(interval * 2, maxInterval);
-        if (interval == maxInterval) {
-            console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
-            return;
-        }
-
-        setTimeout(function () {
-            shortPolling(buildId, 0, interval, maxInterval)
-        }, interval);
-    } catch (error) {
-        if (retries >= 3) {
-            console.log('[smartui] Error: Failed getting build status.', error.message);
-            console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
-            return;
-        }
-
-        setTimeout(function () {
-            shortPolling(buildId, retries+1, interval, maxInterval);
-        }, 2000);
-    }
+            
+            // Double the INTERVAL, up to the maximum INTERVAL of 512 secs (so ~15 mins in total)
+            INTERVAL = Math.min(INTERVAL * 2, MAX_INTERVAL);
+            if (INTERVAL == MAX_INTERVAL) {
+                console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
+                return;
+            }
+    
+            setTimeout(function () {
+                shortPolling(buildId, 0, options)
+            }, INTERVAL);
+        })
+        .catch(function (error) {
+            if (retries >= 3) {
+                console.log('[smartui] Error: Failed getting build status.', error.message);
+                console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
+                return;
+            }
+    
+            console.log('here2');
+            setTimeout(function () {
+                shortPolling(buildId, retries+1, options);
+            }, 2000);
+        });
 };
 
 function getBase64(url) {
