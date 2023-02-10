@@ -49,36 +49,86 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     form.append('resolution', storybookConfig.resolutions);
     form.append('browser', storybookConfig.browsers);
     form.append('projectToken', process.env.PROJECT_TOKEN);
-    form.append('buildName', options.buildname);
+    // form.append('buildName', options.buildname);
     form.append('branch', commit.branch);
     form.append('commitId', commit.shortHash);
     form.append('commitAuthor', commit.author.name);
     form.append('commitMessage', commit.subject);
 
     // Send DOM to render API
-    axios.post(constants[options.env].RENDER_API_URL, form, {
+    await axios.post(constants[options.env].RENDER_API_URL, form, {
         headers: {
             ...form.getHeaders()
         }
         })
-        .then(function (response) {
-            console.log('[smartui] Build successful')
+        .then(async function (response) {
+            console.log('[smartui] Build in progress...');
+            await shortPolling(response.data.buildId, 0, 2000, 512000);
         })
         .catch(function (error) {
-            fs.rm('doms', {recursive: true}, (err) => {
-                if (err) {
-                    return console.error(err);
-                }
-            });
             console.log('[smartui] Build failed: Error: ', error.message);
-            process.exit(0);
         });
-
+    
     fs.rm('doms', {recursive: true}, (err) => {
         if (err) {
             return console.error(err);
         }
     });
+};
+
+async function shortPolling(buildId, retries = 0, interval, maxInterval) {
+    try {
+        const response = await axios.get('https://stage-api.lambdatestinternal.com/storybook/status?buildId=' + buildId, {
+            headers: {
+                projectToken: process.env.PROJECT_TOKEN
+            }
+        });
+
+        if (response.data) {
+            if (response.data.buildStatus === 'completed') {
+                console.log('[smartui] Build successful\n');
+                console.log('[smartui] Build details:\n',
+                    // 'Build URL: ', response.data.buildId, '\n',
+                    'Build Name: ', response.data.buildName, '\n',
+                    'Total Screenshots: ', response.data.screenshots.length, '\n',
+                    'Approved: ', response.data.buildResults.approved, '\n',
+                    'Changes found: ', response.data.buildResults.changesFound, '\n'
+                );
+
+                response.data.screenshots.forEach(screenshot => {
+                    console.log(screenshot.storyName, ' | Mis-match: ', screenshot.mismatchPercentage);
+                });
+
+                return;
+            } else {
+                if (response.data.screenshots.length > 0) {
+                    // TODO: show Screenshots processed 8/10 
+                    console.log('[smartui] Screenshots processed: ', response.data.screenshots.length)
+                }
+            }
+        }
+        
+        // Double the interval, up to the maximum interval of 512 secs (so ~15 mins in total)
+        interval = Math.min(interval * 2, maxInterval);
+        if (interval == maxInterval) {
+            console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
+            return;
+        }
+
+        setTimeout(function () {
+            shortPolling(buildId, 0, interval, maxInterval)
+        }, interval);
+    } catch (error) {
+        if (retries >= 3) {
+            console.log('[smartui] Error: Failed getting build status.', error.message);
+            console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
+            return;
+        }
+
+        setTimeout(function () {
+            shortPolling(buildId, retries+1, interval, maxInterval);
+        }, 2000);
+    }
 };
 
 function getBase64(url) {
