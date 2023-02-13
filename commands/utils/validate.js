@@ -1,5 +1,6 @@
 const axios = require('axios');
 var { constants } = require('./constants');
+const fs = require('fs');
 
 function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) { 
@@ -51,4 +52,12 @@ function validateStorybookUrl(url) {
         });
 };
 
-module.exports = { validateProjectToken, validateStorybookUrl };
+async function validateStorybookDir(dir) {
+    // verify the storybook static directory exists
+    if (!fs.existsSync(dir)) {
+        console.log(`[smartui] Error: No directory found: ${dir}`);
+        process.exit(1);
+    }
+};
+
+module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir };

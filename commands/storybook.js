@@ -1,13 +1,22 @@
 const { default: axios } = require('axios')
 const fs = require('fs');
 const { sendDoM } = require('./utils/dom')
-const { validateStorybookUrl } = require('./utils/validate')
+const { validateStorybookUrl, validateStorybookDir } = require('./utils/validate')
 const { defaultSmartUIConfig } = require('./utils/config')
 const { skipStory } = require('./utils/story')
+const { createStaticServer } = require('./utils/server')
 
-async function storybook(url, options) {
-    // Check connection with storybook url
-    await validateStorybookUrl(url);
+async function storybook(serve, options) {
+    let server, url;
+    let type = /^https?:\/\//.test(serve) ? 'url' : 'dir'
+    if (type === 'url') {
+        await validateStorybookUrl(serve);
+        url = serve;
+    } else {
+        await validateStorybookDir(serve);
+        server = await createStaticServer(serve);
+        url = `http://localhost:${server.address().port}`;
+    }
 
     // TODO: modularize this and separate check for file exists
     let storybookConfig = defaultSmartUIConfig.storybook; 
@@ -37,8 +46,8 @@ async function storybook(url, options) {
     storybookConfig.browsers = (!storybookConfig.browsers.length) ? 'all' : storybookConfig.browsers.toString();
 
     // Get stories object from stories.json and add url corresponding to every story ID 
-    axios.get(new URL('stories.json', url).href)
-        .then(function (response) {
+    await axios.get(new URL('stories.json', url).href)
+        .then(async function (response) {
             let stories = {}
             for (const [storyId, storyInfo] of Object.entries(response.data.stories)) {
                 if (!skipStory(storyInfo.name, storybookConfig)) {
@@ -59,7 +68,7 @@ async function storybook(url, options) {
                 }
             }
             // Capture DoM of every story and send it to renderer API
-            sendDoM(url, stories, storybookConfig, options);
+            await sendDoM(url, stories, storybookConfig, options);
         })
         .catch(function (error) {
             if (error.response) {
@@ -69,8 +78,11 @@ async function storybook(url, options) {
             } else {
                 console.log('[smartui] Error: Cannot fetch Storybook stories');
             }
-            process.exit(0);
         });
+    
+    // Close static server
+    if (server) server?.close();
+    
 };
 
 module.exports = { storybook };
