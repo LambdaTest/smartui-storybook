@@ -27,9 +27,11 @@
     "axios": "^1.2.2",
     "browserless": "^9.8.0",
     "commander": "^9.5.0",
+    "finalhandler": "^1.2.0",
     "form-data": "^4.0.0",
     "jsdom": "^21.1.0",
     "lodash": "^4.17.21",
-    "puppeteer": "^19.5.2"
+    "puppeteer": "^19.5.2",
+    "serve-static": "^1.15.0"
   }
 }

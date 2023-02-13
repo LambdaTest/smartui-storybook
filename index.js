@@ -24,13 +24,13 @@ configCommand.command('create')
 
 program.command('storybook')
     .description('Snapshot Storybook stories')
-    .argument('<url>', 'Storybook url')
+    .argument('<url|directory>', 'Storybook url or static build directory')
     .option('-c --config <file>', 'Config file path')
     // .option('--env <prod|stage>', 'Runtime environment option', 'prod')
-    .action(async function(url, options) {
+    .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         await validateProjectToken(options);
-        storybook(url, options);
+        storybook(serve, options);
     });
 
 program.parse();
