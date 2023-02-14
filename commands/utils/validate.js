@@ -63,7 +63,7 @@ async function validateStorybookDir(dir) {
 
 async function validateLatestBuild(options) {
     let commit = await getLastCommit();
-    return axios.get(new URL('/storybook/validate', constants[options.env].BASE_URL).href, {
+    return axios.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         },
@@ -80,7 +80,7 @@ async function validateLatestBuild(options) {
         })
         .catch(function (error) {
             // TODO: Add retries
-            console.log('[smartui] Error: Cannot connect with SmartUI platform.')
+            console.log('[smartui] Error: ', error.message);
             process.exit(1);
         });
 }
