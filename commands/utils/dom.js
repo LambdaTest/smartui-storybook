@@ -43,7 +43,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     await browser.close()
 
     // Create form
-    // let commit = await getLastCommit();
+    let commit = await getLastCommit();
     const form = new formData();
     for (const [storyId, storyInfo] of Object.entries(stories)) {
         const file = fs.readFileSync('doms/' + storyId + '.html');
@@ -52,11 +52,10 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     form.append('resolution', storybookConfig.resolutions);
     form.append('browser', storybookConfig.browsers);
     form.append('projectToken', process.env.PROJECT_TOKEN);
-    // form.append('buildName', options.buildname);
-    // form.append('branch', commit.branch);
-    // form.append('commitId', commit.shortHash);
-    // form.append('commitAuthor', commit.author.name);
-    // form.append('commitMessage', commit.subject);
+    form.append('branch', commit.branch);
+    form.append('commitId', commit.shortHash);
+    form.append('commitAuthor', commit.author.name);
+    form.append('commitMessage', commit.subject);
 
     // Send DOM to render API
     await axios.post(constants[options.env].RENDER_API_URL, form, {
