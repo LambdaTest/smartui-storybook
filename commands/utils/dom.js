@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path')
 const formData = require('form-data');
 const { JSDOM } = require("jsdom");
+const Table = require('cli-table3');
 var { constants } = require('./constants');
-const { getLastCommit } = require('./git')
+const { getLastCommit } = require('./git');
 
 var INTERVAL = 2000
 const MAX_INTERVAL = 512000
@@ -88,22 +89,41 @@ async function shortPolling(buildId, retries = 0, options) {
                 if (response.data.buildStatus === 'completed') {
                     console.log('[smartui] Build successful\n');
                     console.log('[smartui] Build details:\n',
-                        // 'Build URL: ', response.data.buildId, '\n',
+                        'Build URL: ', response.data.buildURL, '\n',
                         'Build Name: ', response.data.buildName, '\n',
-                        'Total Screenshots: ', response.data.screenshots.length, '\n',
+                        'Total Screenshots: ', response.data.totalScreenshots, '\n',
                         'Approved: ', response.data.buildResults.approved, '\n',
                         'Changes found: ', response.data.buildResults.changesFound, '\n'
                     );
-    
-                    response.data.screenshots.forEach(screenshot => {
-                        console.log(screenshot.storyName, ' | Mis-match: ', screenshot.mismatchPercentage);
-                    });
-    
+                    
+                    if (response.data.screenshots && response.data.screenshots.length > 0) {
+                        import('chalk').then((chalk) => {
+                            const table = new Table({
+                                head: [
+                                    {content: chalk.default.white('Story'), hAlign: 'center'},
+                                    {content: chalk.default.white('Mis-match %'), hAlign: 'center'},
+                                ]
+                            });
+                            response.data.screenshots.forEach(screenshot => {
+                                let mismatch = screenshot.mismatchPercentage
+                                table.push([
+                                    chalk.default.yellow(screenshot.storyName),
+                                    mismatch > 0 ? chalk.default.red(mismatch) : chalk.default.green(mismatch)
+                                ])
+                            });
+                            console.log(table.toString());
+                        })
+                    } else {
+                        if (response.data.baseline) {
+                            console.log('No comparisons run. This is a baseline build.');
+                        }
+                        console.log('No comparisons run. No screenshot in the current build has the corresponding screenshot in baseline build.');
+                    }
                     return;
                 } else {
                     if (response.data.screenshots && response.data.screenshots.length > 0) {
-                        // TODO: show Screenshots processed 8/10 
-                        console.log('[smartui] Screenshots processed: ', response.data.screenshots.length)
+                        // TODO: show Screenshots processed current/total 
+                        console.log('[smartui] Screenshots compared: ', response.data.screenshots.length)
                     }
                 }
             }
@@ -125,8 +145,7 @@ async function shortPolling(buildId, retries = 0, options) {
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
                 return;
             }
-    
-            console.log('here2');
+
             setTimeout(function () {
                 shortPolling(buildId, retries+1, options);
             }, 2000);
