@@ -25,16 +25,24 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
         const browserless = await browser.createContext()
         const html = await browserless.html(storyInfo.url)
 
-        dom = new JSDOM(html);
-        for(element of dom.window.document.querySelectorAll('img')) {
+        dom = new JSDOM(html, {
+            url: storybookUrl,
+            resources: 'usable'
+        });
+        clone = new JSDOM(html);
+
+        // Serialize DOM
+        for(element of clone.window.document.querySelectorAll('img')) {
             let image = new URL(element.getAttribute('src'), storybookUrl).href;
             let format = path.extname(image).replace(/^./, '');
             format = format === 'svg' ? 'svg+xml' : format
             let imageAsBase64 = await getBase64(image);
             element.setAttribute('src', 'data:image/'+format+';base64,'+imageAsBase64);
         }
+        await serializeCSSOM(dom, clone);
+
         try {
-            fs.writeFileSync('doms/' + storyId + '.html', dom.serialize());
+            fs.writeFileSync('doms/' + storyId + '.html', clone.serialize());
         } catch (err) {
             console.error(err);
         }
@@ -162,6 +170,22 @@ function getBase64(url) {
             console.log('[smartui] Error: ', error.message);
             process.exit(0);
         });
+}
+
+async function serializeCSSOM(dom, clone) {
+    return new Promise(resolve => {
+        dom.window.addEventListener("load", () => {
+            console.log(dom.window.document.styleSheets.length);
+            for (let styleSheet of dom.window.document.styleSheets) {
+                let style = clone.window.document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = Array.from(styleSheet.cssRules)
+                    .map(cssRule => cssRule.cssText).join('\n');
+                clone.window.document.head.appendChild(style);
+            }
+            resolve();
+        });
+    });
 }
 
 module.exports = { sendDoM };
