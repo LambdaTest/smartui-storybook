@@ -124,8 +124,9 @@ async function shortPolling(buildId, retries = 0, options) {
                     } else {
                         if (response.data.baseline) {
                             console.log('No comparisons run. This is a baseline build.');
+                        } else {
+                            console.log('No comparisons run. No screenshot in the current build has the corresponding screenshot in baseline build.');
                         }
-                        console.log('No comparisons run. No screenshot in the current build has the corresponding screenshot in baseline build.');
                     }
                     return;
                 } else {
@@ -142,7 +143,7 @@ async function shortPolling(buildId, retries = 0, options) {
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
                 return;
             }
-    
+
             setTimeout(function () {
                 shortPolling(buildId, 0, options)
             }, INTERVAL);
@@ -175,7 +176,6 @@ function getBase64(url) {
 async function serializeCSSOM(dom, clone) {
     return new Promise(resolve => {
         dom.window.addEventListener("load", () => {
-            console.log(dom.window.document.styleSheets.length);
             for (let styleSheet of dom.window.document.styleSheets) {
                 let style = clone.window.document.createElement('style');
                 style.type = 'text/css';
