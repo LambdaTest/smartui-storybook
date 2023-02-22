@@ -77,7 +77,11 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
             await shortPolling(response.data.buildId, 0, options);
         })
         .catch(function (error) {
-            console.log('[smartui] Build failed: Error: ', error.message);
+            if (error.response) {
+                console.log('[smartui] Build failed: Error: ', error.response.data.message);
+            } else {
+                console.log('[smartui] Build failed: Error: ', error.message);
+            }       
         });
     
     fs.rm('doms', {recursive: true}, (err) => {
