@@ -26,12 +26,11 @@ program.command('storybook')
     .description('Snapshot Storybook stories')
     .argument('<url|directory>', 'Storybook url or static build directory')
     .option('-c --config <file>', 'Config file path')
-    .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
-    // .option('--env <prod|stage>', 'Runtime environment option', 'prod')
+    // .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         await validateProjectToken(options);
-        if (!options.forceRebuild) await validateLatestBuild(options);
+        // if (!options.forceRebuild) await validateLatestBuild(options);
         storybook(serve, options);
     });
 
