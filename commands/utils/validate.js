@@ -14,11 +14,11 @@ function validateProjectToken(options) {
             })
             .catch(function (error) {
                 if (error.response) {
-                    console.log('[smartui] ] Error: Invalid Project Token');
+                    console.log('[smartui] Error: Invalid Project Token');
                 } else if (error.request) {
-                    console.log('[smartui] ] Error: Project Token could not be validated');
+                    console.log('[smartui] Project Token not validated. Error: ', error.message);
                 } else {
-                    console.log('[smartui] ] Error: Project Token could not be validated');
+                    console.log('[smartui] Project Token not validated. Error: ', error.message);
                 }
                 process.exit(0);
             }); 
@@ -43,11 +43,11 @@ function validateStorybookUrl(url) {
         })
         .catch(function (error) {
             if (error.response) {
-                console.log('[smartui] Error: Connection to storybook could not be established');
+                console.log('[smartui] Connection to storybook not established. Error: ', error.message);
             } else if (error.request) {
-                console.log('[smartui] Error: Connection to storybook could not be established');
+                console.log('[smartui] Connection to storybook not established. Error: ', error.message);
             } else {
-                console.log('[smartui] Error: Connection to storybook could not be established');
+                console.log('[smartui] Connection to storybook not established. Error: ', error.message);
             }
             process.exit(0);
         });
