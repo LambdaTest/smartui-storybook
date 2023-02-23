@@ -46,11 +46,13 @@ smartui config create .smartui.json
 ```
 
 ## Step 3: Execute tests
-Run the following command to run tests on your Storybook stories. Provide your storybook url, build name and config file (Default config used if no config file provided)
+Run the following command to run visual regression tests on your Storybook components.
 
 ```bash
-smartui storybook http://localhost:6006 --buildname Build1 --config .smartui.json
+smartui storybook http://localhost:6006 --config .smartui.json
 ```
+
+You can also provide path to the storybook-static directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
 # About LambdaTest
 

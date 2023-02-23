@@ -1,9 +1,11 @@
 const axios = require('axios');
 var { constants } = require('./constants');
+const fs = require('fs');
+const { getLastCommit } = require('./git');
 
-function validateProjectToken() {
+function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) { 
-        return axios.get(constants[constants.env].AUTH_URL, {
+        return axios.get(constants[options.env].AUTH_URL, {
             headers: {
                 projectToken: process.env.PROJECT_TOKEN
             }})
@@ -51,4 +53,36 @@ function validateStorybookUrl(url) {
         });
 };
 
-module.exports = { validateProjectToken, validateStorybookUrl };
+async function validateStorybookDir(dir) {
+    // verify the storybook static directory exists
+    if (!fs.existsSync(dir)) {
+        console.log(`[smartui] Error: No directory found: ${dir}`);
+        process.exit(1);
+    }
+};
+
+async function validateLatestBuild(options) {
+    let commit = await getLastCommit();
+    return axios.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
+        headers: {
+            projectToken: process.env.PROJECT_TOKEN
+        },
+        params: {
+            branch: commit.branch,
+            commitId: commit.shortHash
+        }})
+        .then(function (response) {
+            if (response.data.status === 'Failure') {
+                console.log(`[smartui] Build with commit '${commit.shortHash}' on branch '${commit.branch}' already exists.`);
+                console.log('[smartui] Use option --force-rebuild to forcefully push a new build.');
+                process.exit(0);
+            }
+        })
+        .catch(function (error) {
+            // TODO: Add retries
+            console.log('[smartui] Error: ', error.message);
+            process.exit(1);
+        });
+}
+
+module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild };
