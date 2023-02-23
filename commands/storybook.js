@@ -72,11 +72,11 @@ async function storybook(serve, options) {
         })
         .catch(function (error) {
             if (error.response) {
-                console.log('[smartui] Error: Cannot fetch Storybook stories');
+                console.log('[smartui] Cannot fetch stories. Error: ', error.message);
             } else if (error.request) {
-                console.log('[smartui] Error: Cannot fetch Storybook stories');
+                console.log('[smartui] Cannot fetch stories. Error: ', error.message);
             } else {
-                console.log('[smartui] Error: Cannot fetch Storybook stories');
+                console.log('[smartui] Cannot fetch stories. Error: ', error.message);
             }
         });
     
