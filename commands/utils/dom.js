@@ -17,7 +17,8 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     if (!fs.existsSync('doms')){
         fs.mkdir('doms', (err) => {
             if (err) {
-                return console.error(err);
+                console.error(err);
+                process.exit(1);
             }
         });
     }
