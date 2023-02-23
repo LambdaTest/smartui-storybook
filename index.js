@@ -9,7 +9,7 @@ const { createConfig } = require('./commands/config');
 program
     .name('smartui')
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
-    .version('1.1.0')
+    .version('1.1.1')
     .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage']));
 
 const configCommand = program.command('config')
