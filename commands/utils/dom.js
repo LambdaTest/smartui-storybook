@@ -67,6 +67,11 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     // form.append('commitAuthor', commit.author.name);
     // form.append('commitMessage', commit.subject);
 
+    githubURL = process.env.GITHUB_URL
+    if (githubURL) {
+       form.append('githubURL', githubURL);
+    }
+
     // Send DOM to render API
     await axios.post(constants[options.env].RENDER_API_URL, form, {
         headers: {
