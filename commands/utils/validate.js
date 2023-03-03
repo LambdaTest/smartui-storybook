@@ -80,7 +80,7 @@ async function validateLatestBuild(options) {
         })
         .catch(function (error) {
             // TODO: Add retries
-            console.log('[smartui] Error: ', error.message);
+            console.log('[smartui] Cannot fetch latest build of the project. Error: ', error.message);
             process.exit(1);
         });
 }
