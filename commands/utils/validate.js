@@ -54,9 +54,18 @@ function validateStorybookUrl(url) {
 };
 
 async function validateStorybookDir(dir) {
-    // verify the storybook static directory exists
+    // verify the directory exists
     if (!fs.existsSync(dir)) {
         console.log(`[smartui] Error: No directory found: ${dir}`);
+        process.exit(1);
+    }
+    // Verify project.json and stories.json exist to confirm it's a storybook-static dir
+    if (!fs.existsSync(dir + '/index.html')) {
+        console.log(`[smartui] Given directory is not a storybook static directory. Error: No index.html found`);
+        process.exit(1);
+    }
+    if (!fs.existsSync(dir + '/stories.json')) {
+        console.log(`[smartui] Given directory is not a storybook static directory. Error: No stories.json found`);
         process.exit(1);
     }
 };
