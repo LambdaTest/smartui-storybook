@@ -54,9 +54,18 @@ function validateStorybookUrl(url) {
 };
 
 async function validateStorybookDir(dir) {
-    // verify the storybook static directory exists
+    // verify the directory exists
     if (!fs.existsSync(dir)) {
         console.log(`[smartui] Error: No directory found: ${dir}`);
+        process.exit(1);
+    }
+    // Verify project.json and stories.json exist to confirm it's a storybook-static dir
+    if (!fs.existsSync(dir + '/index.html')) {
+        console.log(`[smartui] Given directory is not a storybook static directory. Error: No index.html found`);
+        process.exit(1);
+    }
+    if (!fs.existsSync(dir + '/stories.json')) {
+        console.log(`[smartui] Given directory is not a storybook static directory. Error: No stories.json found`);
         process.exit(1);
     }
 };
@@ -85,4 +94,47 @@ async function validateLatestBuild(options) {
         });
 }
 
-module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild };
+function validateConfig(configFile) {
+    // Verify config file exists
+    if (!fs.existsSync(configFile)) {
+        console.log(`[smartui] Error: Config file ${configFile} not found.`);
+        process.exit(1);
+    }
+
+    // Parse JSON
+    let storybookConfig;
+    try {
+        storybookConfig = JSON.parse(fs.readFileSync(configFile)).storybook;
+    } catch (error) {
+        console.log('[smartui] Error: ', error.message);
+        process.exit(1);
+    }
+
+    // Sanity check browsers
+    if (storybookConfig.browsers.length == 0) {
+        console.log('[smartui] Error: Empty browsers list in config.')
+    }
+    storybookConfig.browsers.forEach(element => {
+        if (!(['chrome', 'safari', 'firefox'].includes(element.toLowerCase()))) {
+            console.log('[smartui] Error: Invalid value for browser. Accepted browsers are chrome, safari and firefox');
+            process.exit(0);
+        }
+    });
+
+    // Sanity check resolutions
+    if (storybookConfig.resolutions.length == 0) {
+        console.log('[smartui] Error: Invalid number of resolutions. Min. required - 1')
+    }
+    if (storybookConfig.resolutions.length > 5) {
+        console.log('[smartui] Error: Invalid number of resolutions. Max allowed - 5')
+    }
+    storybookConfig.resolutions.forEach(element => {
+        if (element.length != 2 || element[0] <= 0 || element[1] <= 0) {
+            console.log('[smartui] Error: Invalid resolutions.')
+        }
+    });
+
+    return storybookConfig
+}
+
+module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild, validateConfig };
