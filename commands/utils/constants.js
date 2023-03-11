@@ -6,7 +6,9 @@ constants.stage = {
     BUILD_STATUS_URL: "https://stage-api.lambdatestinternal.com/storybook/status",
     BASE_URL: "https://stage-api.lambdatestinternal.com",
     SB_BUILD_VALIDATE_PATH: "/storybook/validate",
-    CHECK_UPDATE_PATH: "storybook/packageinfo"
+    CHECK_UPDATE_PATH: "storybook/packageinfo",
+    GET_SIGNED_URL_PATH: "/storybook/url",
+    STATIC_RENDER_PATH: "/storybook/static-render"
 };
 constants.prod = {
     AUTH_URL: "https://api.lambdatest.com/storybook/auth",
@@ -14,7 +16,9 @@ constants.prod = {
     BUILD_STATUS_URL: "https://api.lambdatest.com/storybook/status",
     BASE_URL: "https://api.lambdatest.com",
     SB_BUILD_VALIDATE_PATH: "/storybook/validate",
-    CHECK_UPDATE_PATH: "storybook/packageinfo"
+    CHECK_UPDATE_PATH: "storybook/packageinfo",
+    GET_SIGNED_URL_PATH: "/storybook/url",
+    STATIC_RENDER_PATH: "/storybook/static-render"
 };
 
 module.exports = { constants };

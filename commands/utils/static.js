@@ -1,0 +1,73 @@
+const fs = require('fs');
+const axios = require('axios');
+const archiver = require('archiver');
+var { constants } = require('./constants');
+const { skipStory } = require('./story');
+const { shortPolling } = require('./polling');
+
+var INTERVAL = 2000
+const MAX_INTERVAL = 512000
+
+function getSignedUrl(options) {
+    return axios.get(new URL(constants[options.env].GET_SIGNED_URL_PATH, constants[options.env].BASE_URL).href, {
+        headers: {
+            projectToken: process.env.PROJECT_TOKEN
+        }});
+}
+
+async function compress(dirPath, uploadId) {
+	return new Promise(function (resolve, reject) {
+		// create a file to stream archive data to.
+		const output = fs.createWriteStream('storybook-static.zip', {autoClose: true, emitClose: false});
+		const archive = archiver('zip', {
+		zlib: { level: 9 } // Sets the compression level.
+		});
+
+		output.on('end', function() {
+			console.log('Data has been drained');
+		});
+
+		output.on('finish', function() {
+			resolve();
+		});
+
+		// Catch warnings (ie stat failures and other non-blocking errors)
+		archive.on('warning', function(err) {
+		if (err.code === 'ENOENT') {
+			console.log('Warning: ', err)
+		} else {
+			reject(err)
+		}
+		});
+
+		// Catch errors
+		archive.on('error', function(err) {
+			reject(err);
+		});
+
+		// pipe archive data to the file
+		archive.pipe(output);
+		// append files from a sub-directory and naming it `new-subdir` within the archive
+		archive.directory(dirPath, uploadId);
+		archive.finalize();
+	});
+}
+
+function filterStories(dirPath, storybookConfig) {
+	let storyIds = [];
+	stories = JSON.parse(fs.readFileSync(`${dirPath}/stories.json`)).stories;
+
+	for (const [storyId, storyInfo] of Object.entries(stories)) {
+		if (!skipStory(storyInfo.name, storybookConfig)) {
+			storyIds.push(storyId);
+		}
+	}
+	if (storyIds.length === 0) {
+		console.log('[smartui] Error: No stories found');
+		process.exit(0);
+	}
+
+	return storyIds
+}
+
+module.exports = { getSignedUrl, compress, filterStories };
