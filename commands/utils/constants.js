@@ -8,7 +8,7 @@ constants.stage = {
     SB_BUILD_VALIDATE_PATH: "/storybook/validate",
     CHECK_UPDATE_PATH: "storybook/packageinfo",
     GET_SIGNED_URL_PATH: "/storybook/url",
-    STATIC_RENDER_PATH: "/storybook/static-render"
+    STATIC_RENDER_PATH: "/storybook/staticrender"
 };
 constants.prod = {
     AUTH_URL: "https://api.lambdatest.com/storybook/auth",
@@ -18,7 +18,7 @@ constants.prod = {
     SB_BUILD_VALIDATE_PATH: "/storybook/validate",
     CHECK_UPDATE_PATH: "storybook/packageinfo",
     GET_SIGNED_URL_PATH: "/storybook/url",
-    STATIC_RENDER_PATH: "/storybook/static-render"
+    STATIC_RENDER_PATH: "/storybook/staticrender"
 };
 
 module.exports = { constants };
