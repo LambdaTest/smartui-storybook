@@ -6,6 +6,8 @@ const { defaultSmartUIConfig } = require('./utils/config')
 const { skipStory } = require('./utils/story')
 const { getLastCommit } = require('./utils/git')
 const static = require('./utils/static')
+var { constants } = require('./utils/constants');
+const { shortPolling } = require('./utils/polling');
 
 async function storybook(serve, options) {
     let type = /^https?:\/\//.test(serve) ? 'url' : 'dir';
@@ -103,7 +105,7 @@ async function storybook(serve, options) {
                 });
                 let commit = await getLastCommit();
                 let payload = {
-                    downloadURL: url.substring(0, url.search(/.zip/)+4),
+                    downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
                     uploadId: uploadId,
                     projectToken: process.env.PROJECT_TOKEN,
                     storybookConfig: {
@@ -119,21 +121,20 @@ async function storybook(serve, options) {
                         githubURL: process.env.GITHUB_URL || '',
                     }
                 }
-                console.log(payload);
 
                 // Call static render API
-                // await axios.post(new URL(constants[options.env].STATIC_BASE_URL, constants[options.env].STATIC_RENDER_PATH).href, payload)
-                //     .then(async function (response) {
-                //         console.log('[smartui] Build in progress...');
-                //         await static.shortPolling(response.data.buildId, 0, options);
-                //     })
-                //     .catch(function (error) {
-                //         if (error.response) {
-                //             console.log('[smartui] Build failed: Error: ', error.response.data.message);
-                //         } else {
-                //             console.log('[smartui] Build failed: Error: ', error.message);
-                //         }       
-                //     });
+                await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
+                    .then(async function (response) {
+                        console.log('[smartui] Build in progress...');
+                        await shortPolling(response.data.data.buildId, 0, options);
+                    })
+                    .catch(function (error) {
+                        if (error.response) {
+                            console.log('[smartui] Build failed: Error: ', error.response.data.message);
+                        } else {
+                            console.log('[smartui] Build failed: Error: ', error.message);
+                        }       
+                    });
             })
             .catch(function (error) {
                 if (error.response) {
