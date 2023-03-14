@@ -103,7 +103,7 @@ async function storybook(serve, options) {
                 });
                 let commit = await getLastCommit();
                 let payload = {
-                    downloadURL: url.substring(0, url.search(/.zip/)+4),
+                    downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
                     uploadId: uploadId,
                     projectToken: process.env.PROJECT_TOKEN,
                     storybookConfig: {
