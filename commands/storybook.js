@@ -42,11 +42,9 @@ async function storybook(serve, options) {
                 if (Object.keys(stories).length === 0) {
                     console.log('[smartui] Error: No stories found');
                     process.exit(0);
-                } else {
-                    for (const [storyId, storyInfo] of Object.entries(stories)) {
-                        console.log('[smartui] Story found: ' + storyInfo.name);
-                    }
                 }
+                console.log('[smartui] Stories found: ', Object.keys(stories).length);
+
                 // Capture DoM of every story and send it to renderer API
                 await sendDoM(url, stories, storybookConfig, options);
             })
@@ -74,26 +72,27 @@ async function storybook(serve, options) {
                 // Compress static build
                 await static.compress(dirPath, uploadId)
                     .then(function () {
-                        console.log('[smartui] Successfully compressed static build.')
+                        console.log(`[smartui] ${dirPath} compressed.`)
                     })
                     .catch(function (err) {
-                        console.log('[smartui] Cannot compress static build. Error: ', err.message);
+                        console.log(`[smartui] Cannot compress ${dirPath}. Error: ${err.message}`);
                         process.exit(0);
                     });
                 
                 // Upload to S3
                 const zipData = fs.readFileSync('storybook-static.zip');
+                console.log('[smartui] Upload in progress...')
                 await axios.put(url, zipData, {
                     headers: {
                         'Content-Type': 'application/zip',
                         'Content-Length': zipData.length
                     }})
                     .then(function (response) {
-                        console.log('[smartui] Static build successfully uploaded');
+                        console.log(`[smartui] ${dirPath} uploaded.`);
                         fs.rmSync('storybook-static.zip');
                     })
                     .catch(function (error) {
-                        console.log('[smartui] Cannot upload static build. Error: ', error.message);
+                        console.log(`[smartui] Cannot upload ${dirPath}. Error: ${err.message}`);
                         fs.rmSync('storybook-static.zip');
                         process.exit(0);
                     });
@@ -130,7 +129,7 @@ async function storybook(serve, options) {
                     })
                     .catch(function (error) {
                         if (error.response) {
-                            console.log('[smartui] Build failed: Error: ', error.response.data.message);
+                            console.log('[smartui] Build failed: Error: ', error.response.data.error?.message);
                         } else {
                             console.log('[smartui] Build failed: Error: ', error.message);
                         }       
