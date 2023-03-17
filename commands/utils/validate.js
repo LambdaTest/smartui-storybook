@@ -112,25 +112,33 @@ function validateConfig(configFile) {
 
     // Sanity check browsers
     if (storybookConfig.browsers.length == 0) {
-        console.log('[smartui] Error: Empty browsers list in config.')
+        console.log('[smartui] Error: Empty browsers list in config.');
+        process.exit(0);
+    }
+    if (storybookConfig.browsers.length > constants.VALID_BROWSERS.length) {
+        console.log('[smartui] Error: Invalid or duplicate browsers in config.');
+        process.exit(0);
     }
     storybookConfig.browsers.forEach(element => {
-        if (!(['chrome', 'safari', 'firefox'].includes(element.toLowerCase()))) {
-            console.log('[smartui] Error: Invalid value for browser. Accepted browsers are chrome, safari and firefox');
+        if (!(constants.VALID_BROWSERS.includes(element.toLowerCase()))) {
+            console.log(`[smartui] Error: Invalid value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
             process.exit(0);
         }
     });
 
     // Sanity check resolutions
     if (storybookConfig.resolutions.length == 0) {
-        console.log('[smartui] Error: Invalid number of resolutions. Min. required - 1')
+        console.log('[smartui] Error: Invalid number of resolutions. Min. required - 1');
+        process.exit(0);
     }
     if (storybookConfig.resolutions.length > 5) {
-        console.log('[smartui] Error: Invalid number of resolutions. Max allowed - 5')
+        console.log('[smartui] Error: Invalid number of resolutions. Max allowed - 5');
+        process.exit(0);
     }
     storybookConfig.resolutions.forEach(element => {
         if (element.length != 2 || element[0] <= 0 || element[1] <= 0) {
             console.log('[smartui] Error: Invalid resolutions.')
+            process.exit(0);
         }
     });
 

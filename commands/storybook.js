@@ -23,7 +23,7 @@ async function storybook(serve, options) {
             resolutions.push(element.join('x'));
         });
         storybookConfig.resolutions = (!resolutions.length) ? 'all' : resolutions.toString();
-        storybookConfig.browsers = (!storybookConfig.browsers.length) ? 'all' : storybookConfig.browsers.toString();
+        storybookConfig.browsers = (!storybookConfig.browsers.length) ? 'all' : storybookConfig.browsers.map(x => x.toLowerCase()).toString();
 
         // Get stories object from stories.json and add url corresponding to every story ID 
         await axios.get(new URL('stories.json', url).href)
@@ -38,7 +38,7 @@ async function storybook(serve, options) {
                         }
                     }
                 }
-                
+
                 if (Object.keys(stories).length === 0) {
                     console.log('[smartui] Error: No stories found');
                     process.exit(0);
@@ -60,7 +60,7 @@ async function storybook(serve, options) {
     } else {
         let dirPath = serve;
         await validateStorybookDir(dirPath);
-        
+
         // Get storyIds to be rendered 
         let storyIds = static.filterStories(dirPath, storybookConfig)
 
@@ -78,7 +78,7 @@ async function storybook(serve, options) {
                         console.log(`[smartui] Cannot compress ${dirPath}. Error: ${err.message}`);
                         process.exit(0);
                     });
-                
+
                 // Upload to S3
                 const zipData = fs.readFileSync('storybook-static.zip');
                 console.log('[smartui] Upload in progress...')
@@ -97,10 +97,14 @@ async function storybook(serve, options) {
                         process.exit(0);
                     });
 
-                // Prepare payload data        
+                // Prepare payload data
+                let browsers = []
                 let resolutions = []
+                storybookConfig.browsers.forEach(element => {
+                    browsers.push(element.toLowerCase());
+                });
                 storybookConfig.resolutions.forEach(element => {
-                    resolutions.push({width: element[0], height: element[1]});
+                    resolutions.push({ width: element[0], height: element[1] });
                 });
                 let commit = await getLastCommit();
                 let payload = {
@@ -108,7 +112,7 @@ async function storybook(serve, options) {
                     uploadId: uploadId,
                     projectToken: process.env.PROJECT_TOKEN,
                     storybookConfig: {
-                        browsers: storybookConfig.browsers,
+                        browsers: browsers,
                         resolutions: resolutions,
                         storyIds: storyIds
                     },
@@ -132,7 +136,7 @@ async function storybook(serve, options) {
                             console.log('[smartui] Build failed: Error: ', error.response.data.error?.message);
                         } else {
                             console.log('[smartui] Build failed: Error: ', error.message);
-                        }       
+                        }
                     });
             })
             .catch(function (error) {

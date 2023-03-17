@@ -20,5 +20,6 @@ constants.prod = {
     GET_SIGNED_URL_PATH: "/storybook/url",
     STATIC_RENDER_PATH: "/storybook/staticrender"
 };
+constants.VALID_BROWSERS = ['chrome', 'safari', 'firefox'];
 
 module.exports = { constants };
