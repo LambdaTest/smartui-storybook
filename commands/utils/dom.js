@@ -54,7 +54,9 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     const form = new formData();
     for (const [storyId, storyInfo] of Object.entries(stories)) {
         const file = fs.readFileSync('doms/' + storyId + '.html');
-        filename = storyInfo.kind.replaceAll('/', '#') + ': ' + storyInfo.name;
+        // kind parameter is not present in some cases
+        let title = storyInfo.kind || storyInfo.title || '';
+        filename = title.replaceAll('/', '#') + ': ' + storyInfo.name;
         form.append('files', file, filename+'.html');
     }
     form.append('resolution', storybookConfig.resolutions);
