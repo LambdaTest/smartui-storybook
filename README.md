@@ -1,6 +1,7 @@
  Smart UI Testing With StoryBook ![Storybook](https://img.shields.io/badge/-Storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white)
 
-<img height="400" src="https://user-images.githubusercontent.com/70570645/171361733-065df506-c302-452d-8bc7-e63047377f8e.png">
+<img height="400" src="https://user-images.githubusercontent.com/126776938/232535120-b4856bdd-c869-4bcd-bcdb-29a83e30505c.png">
+
 
 <p align="center">
   <a href="https://www.lambdatest.com/blog/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Blog</a>
