@@ -128,6 +128,7 @@ async function storybook(serve, options) {
                 // Call static render API
                 await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
                     .then(async function (response) {
+                        console.log('[smartui] Build URL: ', response.data.data.buildURL);
                         console.log('[smartui] Build in progress...');
                         await shortPolling(response.data.data.buildId, 0, options);
                     })
