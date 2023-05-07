@@ -8,6 +8,7 @@ const defaultSmartUIConfig = {
         resolutions: [
             [1920, 1080]
         ],
+        waitForTimeout: 0,
         include: [],
         exclude: []
     }

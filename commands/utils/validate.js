@@ -142,6 +142,16 @@ function validateConfig(configFile) {
         }
     });
 
+    if (storybookConfig.waitForTimeout <= 0) {
+        console.log('[smartui] Error: Invalid value of waitForTimeout. Must be > 0');
+        console.log('If you do not wish to include waitForTimeout parameter, remove it from the config file.')
+        process.exit(0);
+    }
+    if (storybookConfig.waitForTimeout > 30000) {
+        console.log('[smartui] Error: Invalid value of waitForTimeout. Must be <= 30000');
+        process.exit(0);
+    }
+
     return storybookConfig
 }
 
