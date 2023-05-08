@@ -114,7 +114,8 @@ async function storybook(serve, options) {
                     storybookConfig: {
                         browsers: browsers,
                         resolutions: resolutions,
-                        storyIds: storyIds
+                        storyIds: storyIds,
+                        waitForTimeout: storybookConfig.waitForTimeout
                     },
                     git: {
                         branch: commit.branch,
