@@ -36,13 +36,14 @@ program.command('storybook')
     .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
-        if (options.config) {
-            options.config = validateConfig(options.config);
-        }
-
+        
         console.log('SmartUI Storybook CLI v' + version);
         await checkUpdate(version, options);
         console.log('\n');
+
+        if (options.config) {
+            options.config = validateConfig(options.config);
+        }
 
         await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
