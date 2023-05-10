@@ -142,6 +142,15 @@ function validateConfig(configFile) {
         }
     });
 
+    // Sanity check waitForTimeout
+    if (!Object.hasOwn(storybookConfig, 'waitForTimeout')) {
+        storybookConfig.waitForTimeout = 0;
+    } else if (storybookConfig.waitForTimeout <= 0 || storybookConfig.waitForTimeout > 30000) {
+        console.log('[smartui] Warning: Invalid config, value of waitForTimeout must be > 0 and <= 30000');
+        console.log('If you do not wish to include waitForTimeout parameter, remove it from the config file.');
+        storybookConfig.waitForTimeout = 0;
+    }
+
     return storybookConfig
 }
 
