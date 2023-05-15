@@ -92,7 +92,7 @@ async function storybook(serve, options) {
                         fs.rmSync('storybook-static.zip');
                     })
                     .catch(function (error) {
-                        console.log(`[smartui] Cannot upload ${dirPath}. Error: ${err.message}`);
+                        console.log(`[smartui] Cannot upload ${dirPath}. Error: ${error.message}`);
                         fs.rmSync('storybook-static.zip');
                         process.exit(0);
                     });
