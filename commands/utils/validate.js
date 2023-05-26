@@ -3,6 +3,13 @@ var { constants } = require('./constants');
 const fs = require('fs');
 const { getLastCommit } = require('./git');
 
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+}
+
 function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) { 
         return axios.get(constants[options.env].AUTH_URL, {
@@ -110,7 +117,12 @@ function validateConfig(configFile) {
         process.exit(1);
     }
 
-    validateConfigBrowsers(storybookConfig.browsers);
+    try {
+        validateConfigBrowsers(storybookConfig.browsers);
+    } catch (error) {
+        console.log(`[smartui] Error: ${error.message}`);
+        process.exit(0);
+    }
 
     // Sanity check resolutions
     if (storybookConfig.resolutions.length == 0) {
@@ -142,19 +154,23 @@ function validateConfig(configFile) {
 
 function validateConfigBrowsers(browsers) {
     if (browsers.length == 0) {
-        console.log('[smartui] Error: Empty browsers list in config.');
-        process.exit(0);
+        throw new ValidationError('Empty browsers list in config.');
     }
-    if (browsers.length > constants.VALID_BROWSERS.length) {
-        console.log('[smartui] Error: Invalid or duplicate browsers in config.');
-        process.exit(0);
-    }
-    browsers.forEach(element => {
-        if (!(constants.VALID_BROWSERS.includes(element.toLowerCase()))) {
-            console.log(`[smartui] Error: Invalid value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
-            process.exit(0);
+    const set = new Set();
+    for (let element of browsers) {
+        if (!constants.VALID_BROWSERS.includes(element.toLowerCase()) || set.has(element)) {
+            throw new ValidationError(`Invalid or duplicate value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
         }
-    });
+        set.add(element);
+    };
 }
 
-module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild, validateConfig };
+module.exports = { 
+    ValidationError,
+    validateProjectToken,
+    validateStorybookUrl,
+    validateStorybookDir,
+    validateLatestBuild,
+    validateConfig,
+    validateConfigBrowsers
+};
