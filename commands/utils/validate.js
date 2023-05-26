@@ -110,21 +110,7 @@ function validateConfig(configFile) {
         process.exit(1);
     }
 
-    // Sanity check browsers
-    if (storybookConfig.browsers.length == 0) {
-        console.log('[smartui] Error: Empty browsers list in config.');
-        process.exit(0);
-    }
-    if (storybookConfig.browsers.length > constants.VALID_BROWSERS.length) {
-        console.log('[smartui] Error: Invalid or duplicate browsers in config.');
-        process.exit(0);
-    }
-    storybookConfig.browsers.forEach(element => {
-        if (!(constants.VALID_BROWSERS.includes(element.toLowerCase()))) {
-            console.log(`[smartui] Error: Invalid value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
-            process.exit(0);
-        }
-    });
+    validateConfigBrowsers(storybookConfig.browsers);
 
     // Sanity check resolutions
     if (storybookConfig.resolutions.length == 0) {
@@ -152,6 +138,23 @@ function validateConfig(configFile) {
     }
 
     return storybookConfig
+}
+
+function validateConfigBrowsers(browsers) {
+    if (browsers.length == 0) {
+        console.log('[smartui] Error: Empty browsers list in config.');
+        process.exit(0);
+    }
+    if (browsers.length > constants.VALID_BROWSERS.length) {
+        console.log('[smartui] Error: Invalid or duplicate browsers in config.');
+        process.exit(0);
+    }
+    browsers.forEach(element => {
+        if (!(constants.VALID_BROWSERS.includes(element.toLowerCase()))) {
+            console.log(`[smartui] Error: Invalid value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
+            process.exit(0);
+        }
+    });
 }
 
 module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild, validateConfig };

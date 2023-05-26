@@ -3,7 +3,8 @@ const defaultSmartUIConfig = {
         browsers: [
             'chrome',
             'firefox',
-            'safari'
+            'safari',
+            'edge'
         ],
         resolutions: [
             [1920, 1080]
