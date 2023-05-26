@@ -9,7 +9,7 @@
   },
   "homepage": "https://github.com/LambdaTest/smartui-storybook#readme",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --config=./test/jest.config.js"
   },
   "bin": {
     "smartui": "./index.js"
@@ -36,5 +36,8 @@
     "lodash": "^4.17.21",
     "puppeteer": "^19.5.2",
     "serve-static": "^1.15.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
   }
 }
