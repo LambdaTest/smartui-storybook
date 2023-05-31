@@ -19,7 +19,8 @@ async function shortPolling(buildId, retries = 0, options) {
                         'Build Name: ', response.data.buildName, '\n',
                         'Total Screenshots: ', response.data.totalScreenshots, '\n',
                         'Approved: ', response.data.buildResults.approved, '\n',
-                        'Changes found: ', response.data.buildResults.changesFound, '\n'
+                        'Changes found: ', response.data.buildResults.changesFound, '\n',
+                        'Rejected:' , response.data.buildResults.rejected, '\n'
                     );
                     
                     if (response.data.screenshots && response.data.screenshots.length > 0) {
