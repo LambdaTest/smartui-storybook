@@ -3,6 +3,19 @@ var { constants } = require('./constants');
 const fs = require('fs');
 const { getLastCommit } = require('./git');
 
+const MAX_RESOLUTIONS = 5
+const MIN_RESOLUTION_WIDTH = 320
+const MIN_RESOLUTION_HEIGHT = 320
+const MAX_RESOLUTION_WIDTH = 7680
+const MAX_RESOLUTION_HEIGHT = 7680
+
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+}
+
 function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) { 
         return axios.get(constants[options.env].AUTH_URL, {
@@ -110,37 +123,13 @@ function validateConfig(configFile) {
         process.exit(1);
     }
 
-    // Sanity check browsers
-    if (storybookConfig.browsers.length == 0) {
-        console.log('[smartui] Error: Empty browsers list in config.');
+    try {
+        validateConfigBrowsers(storybookConfig.browsers);
+        storybookConfig.resolutions = validateConfigResolutions(storybookConfig.resolutions);
+    } catch (error) {
+        console.log(`[smartui] Error: Invalid config, ${error.message}`);
         process.exit(0);
     }
-    if (storybookConfig.browsers.length > constants.VALID_BROWSERS.length) {
-        console.log('[smartui] Error: Invalid or duplicate browsers in config.');
-        process.exit(0);
-    }
-    storybookConfig.browsers.forEach(element => {
-        if (!(constants.VALID_BROWSERS.includes(element.toLowerCase()))) {
-            console.log(`[smartui] Error: Invalid value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
-            process.exit(0);
-        }
-    });
-
-    // Sanity check resolutions
-    if (storybookConfig.resolutions.length == 0) {
-        console.log('[smartui] Error: Invalid number of resolutions. Min. required - 1');
-        process.exit(0);
-    }
-    if (storybookConfig.resolutions.length > 5) {
-        console.log('[smartui] Error: Invalid number of resolutions. Max allowed - 5');
-        process.exit(0);
-    }
-    storybookConfig.resolutions.forEach(element => {
-        if (element.length != 2 || element[0] <= 0 || element[1] <= 0) {
-            console.log('[smartui] Error: Invalid resolutions.')
-            process.exit(0);
-        }
-    });
 
     // Sanity check waitForTimeout
     if (!Object.hasOwn(storybookConfig, 'waitForTimeout')) {
@@ -154,4 +143,55 @@ function validateConfig(configFile) {
     return storybookConfig
 }
 
-module.exports = { validateProjectToken, validateStorybookUrl, validateStorybookDir, validateLatestBuild, validateConfig };
+function validateConfigBrowsers(browsers) {
+    if (browsers.length == 0) {
+        throw new ValidationError('empty browsers list.');
+    }
+    const set = new Set();
+    for (let element of browsers) {
+        if (!constants.VALID_BROWSERS.includes(element.toLowerCase()) || set.has(element)) {
+            throw new ValidationError(`invalid or duplicate value for browser. Accepted browsers are ${constants.VALID_BROWSERS.join(',')}`);
+        }
+        set.add(element);
+    };
+}
+
+function validateConfigResolutions(resolutions) {
+    if (!Array.isArray(resolutions)) {
+        throw new ValidationError('invalid resolutions.');
+    }
+    if (resolutions.length == 0) {
+        throw new ValidationError('empty resolutions list in config.');
+    }
+    if (resolutions.length > 5) {
+        throw new ValidationError(`max resolutions: ${MAX_RESOLUTIONS}`);
+    }
+    let res = [];
+    resolutions.forEach(element => {
+        if (!Array.isArray(element) || element.length == 0 || element.length > 2) {
+            throw new ValidationError('invalid resolutions.');
+        }
+        let width = element[0];
+        let height = element[1];
+        if (typeof width != 'number' || width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
+            throw new ValidationError(`width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
+        }
+        if (height && (typeof height != 'number' || height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+            throw new ValidationError(`height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
+        }
+        res.push([width, height || 0]);
+    });
+
+    return res
+}
+
+module.exports = { 
+    ValidationError,
+    validateProjectToken,
+    validateStorybookUrl,
+    validateStorybookDir,
+    validateLatestBuild,
+    validateConfig,
+    validateConfigBrowsers,
+    validateConfigResolutions
+};
