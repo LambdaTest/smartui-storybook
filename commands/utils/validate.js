@@ -33,12 +33,12 @@ function validateProjectToken(options) {
                 } else {
                     console.log('[smartui] Project Token not validated. Error: ', error.message);
                 }
-                process.exit(0);
+                process.exit(constants.ERROR_CATCHALL);
             }); 
     }
     else { 
         console.log('[smartui] Error: No PROJECT_TOKEN set');
-        process.exit(0);
+        process.exit(constants.ERROR_CATCHALL);
     }
 };
 
@@ -48,7 +48,7 @@ function validateStorybookUrl(url) {
         aboutUrl = new URL('?path=/settings/about', url).href;
     } catch (error) {
         console.log('[smartui] Error: ', error.message)
-        process.exit(0);
+        process.exit(constants.ERROR_CATCHALL);
     }
     return axios.get(aboutUrl)
         .then(function (response) {
@@ -62,7 +62,7 @@ function validateStorybookUrl(url) {
             } else {
                 console.log('[smartui] Connection to storybook not established. Error: ', error.message);
             }
-            process.exit(0);
+            process.exit(constants.ERROR_CATCHALL);
         });
 };
 
@@ -70,16 +70,16 @@ async function validateStorybookDir(dir) {
     // verify the directory exists
     if (!fs.existsSync(dir)) {
         console.log(`[smartui] Error: No directory found: ${dir}`);
-        process.exit(1);
+        process.exit(constants.ERROR_CATCHALL);
     }
     // Verify project.json and stories.json exist to confirm it's a storybook-static dir
     if (!fs.existsSync(dir + '/index.html')) {
         console.log(`[smartui] Given directory is not a storybook static directory. Error: No index.html found`);
-        process.exit(1);
+        process.exit(constants.ERROR_CATCHALL);
     }
     if (!fs.existsSync(dir + '/stories.json')) {
         console.log(`[smartui] Given directory is not a storybook static directory. Error: No stories.json found`);
-        process.exit(1);
+        process.exit(constants.ERROR_CATCHALL);
     }
 };
 
@@ -97,13 +97,13 @@ async function validateLatestBuild(options) {
             if (response.data.status === 'Failure') {
                 console.log(`[smartui] Build with commit '${commit.shortHash}' on branch '${commit.branch}' already exists.`);
                 console.log('[smartui] Use option --force-rebuild to forcefully push a new build.');
-                process.exit(0);
+                process.exit(constants.ERROR_BUILD_ALREADY_EXISTS);
             }
         })
         .catch(function (error) {
             // TODO: Add retries
             console.log('[smartui] Cannot fetch latest build of the project. Error: ', error.message);
-            process.exit(1);
+            process.exit(constants.ERROR_CATCHALL);
         });
 }
 
@@ -111,7 +111,7 @@ function validateConfig(configFile) {
     // Verify config file exists
     if (!fs.existsSync(configFile)) {
         console.log(`[smartui] Error: Config file ${configFile} not found.`);
-        process.exit(1);
+        process.exit(constants.ERROR_CATCHALL);
     }
 
     // Parse JSON
@@ -120,7 +120,7 @@ function validateConfig(configFile) {
         storybookConfig = JSON.parse(fs.readFileSync(configFile)).storybook;
     } catch (error) {
         console.log('[smartui] Error: ', error.message);
-        process.exit(1);
+        process.exit(constants.ERROR_CATCHALL);
     }
 
     try {
@@ -128,7 +128,7 @@ function validateConfig(configFile) {
         storybookConfig.resolutions = validateConfigResolutions(storybookConfig.resolutions);
     } catch (error) {
         console.log(`[smartui] Error: Invalid config, ${error.message}`);
-        process.exit(0);
+        process.exit(constants.ERROR_CATCHALL);
     }
 
     // Sanity check waitForTimeout
