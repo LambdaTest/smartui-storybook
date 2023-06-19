@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const { defaultSmartUIConfig } = require('./utils/config')
+const { defaultSmartUIConfig } = require('./utils/config');
+var { constants } = require('./utils/constants');
 
 function createConfig(filepath) {
     // default filepath
@@ -8,13 +9,15 @@ function createConfig(filepath) {
     let filetype = path.extname(filepath);
     if (filetype != '.json') {
         console.log(`[smartui] Error: Config file must have .json extension`);
-        process.exit(1);
+        process.exitCode = constants.ERROR_CATCHALL;
+        return
     }
 
     // verify the file does not already exist
     if (fs.existsSync(filepath)) {
         console.log(`[smartui] Error: LambdaTest SmartUI config already exists: ${filepath}`);
-        process.exit(1);
+        process.exitCode = constants.ERROR_CATCHALL;
+        return
     }
 
     // write stringified default config options to the filepath
