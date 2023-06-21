@@ -40,8 +40,8 @@ async function shortPolling(buildId, retries = 0, options) {
                             });
                             console.log(table.toString());
 
-                            if (response.data.buildResults.changesFound != 0) {
-                                process.exitCode = constants.ERROR_CHANGES_FOUND;
+                            if (response.data.buildResults.changesFound != 0 || response.data.buildResults.rejected != 0) {
+                                process.exitCode = constants.ERROR_CHANGES_FOUND_OR_REJECTED;
                             }
                         })
                     } else {
