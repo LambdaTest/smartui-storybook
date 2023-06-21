@@ -41,7 +41,7 @@ async function storybook(serve, options) {
 
                 if (Object.keys(stories).length === 0) {
                     console.log('[smartui] Error: No stories found');
-                    process.exit(0);
+                    process.exit(constants.ERROR_CATCHALL);
                 }
                 console.log('[smartui] Stories found: ', Object.keys(stories).length);
 
@@ -49,6 +49,7 @@ async function storybook(serve, options) {
                 await sendDoM(url, stories, storybookConfig, options);
             })
             .catch(function (error) {
+                process.exitCode = constants.ERROR_CATCHALL;
                 if (error.response) {
                     console.log('[smartui] Cannot fetch stories. Error: ', error.message);
                 } else if (error.request) {
@@ -76,7 +77,7 @@ async function storybook(serve, options) {
                     })
                     .catch(function (err) {
                         console.log(`[smartui] Cannot compress ${dirPath}. Error: ${err.message}`);
-                        process.exit(0);
+                        process.exit(constants.ERROR_CATCHALL);
                     });
 
                 // Upload to S3
@@ -94,7 +95,7 @@ async function storybook(serve, options) {
                     .catch(function (error) {
                         console.log(`[smartui] Cannot upload ${dirPath}. Error: ${error.message}`);
                         fs.rmSync('storybook-static.zip');
-                        process.exit(0);
+                        process.exit(constants.ERROR_CATCHALL);
                     });
 
                 // Prepare payload data
@@ -139,6 +140,7 @@ async function storybook(serve, options) {
                         } else {
                             console.log('[smartui] Build failed: Error: ', error.message);
                         }
+                        process.exitCode = constants.ERROR_CATCHALL;
                     });
             })
             .catch(function (error) {
@@ -147,7 +149,7 @@ async function storybook(serve, options) {
                 } else {
                     console.log('[smartui] Error: ', error.message);
                 }
-                process.exit(0);
+                process.exitCode = constants.ERROR_CATCHALL;
             });
 
     }

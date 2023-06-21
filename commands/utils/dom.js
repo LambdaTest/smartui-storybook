@@ -15,7 +15,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
         fs.mkdir('doms', (err) => {
             if (err) {
                 console.error(err);
-                process.exit(1);
+                process.exit(constants.ERROR_CATCHALL);
             }
         });
     }
@@ -106,7 +106,7 @@ function getBase64(url) {
         .then(response => response.data)
         .catch(function (error) {
             console.log('[smartui] Error: ', error.message);
-            process.exit(0);
+            process.exit(constants.ERROR_CATCHALL);
         });
 }
 

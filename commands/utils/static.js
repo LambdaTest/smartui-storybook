@@ -64,7 +64,7 @@ function filterStories(dirPath, storybookConfig) {
 	}
 	if (storyIds.length === 0) {
 		console.log('[smartui] Error: No stories found');
-		process.exit(0);
+		process.exit(constants.ERROR_CATCHALL);
 	}
 	console.log('[smartui] Stories found: ', storyIds.length);
 
