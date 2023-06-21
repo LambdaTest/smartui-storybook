@@ -25,6 +25,6 @@ constants.VALID_BROWSERS = ['chrome', 'safari', 'firefox', 'edge'];
 // Error codes
 constants.ERROR_CATCHALL = 1
 constants.ERROR_BUILD_ALREADY_EXISTS = 3
-constants.ERROR_CHANGES_FOUND = 4
+constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
 
 module.exports = { constants };
