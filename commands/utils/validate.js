@@ -17,29 +17,30 @@ class ValidationError extends Error {
     }
 }
 
-function validateProjectToken(options) {
-    console.log("options", options);
-    if (process.env.PROJECT_TOKEN) { 
+function validateProjectToken(options, logger) {
+    logger.debug("options", options);
+    if (process.env.PROJECT_TOKEN) {
         return axios.get(constants[options.env].AUTH_URL, {
             headers: {
                 projectToken: process.env.PROJECT_TOKEN
-            }})
+            }
+        })
             .then(function (response) {
-                console.log('[smartui] Project Token Validated');
+                logger.info('[smartui] Project Token Validated');
             })
             .catch(function (error) {
                 if (error.response) {
-                    console.log('[smartui] Error: Invalid Project Token');
+                    logger.error('[smartui] Error: Invalid Project Token');
                 } else if (error.request) {
-                    console.log('[smartui] Project Token not validated. Error: ', error.message);
+                    logger.error('[smartui] Project Token not validated. Error: ', error.message);
                 } else {
-                    console.log('[smartui] Project Token not validated. Error: ', error.message);
+                    logger.error('[smartui] Project Token not validated. Error: ', error.message);
                 }
                 process.exit(constants.ERROR_CATCHALL);
-            }); 
+            });
     }
-    else { 
-        console.log('[smartui] Error: please set PROJECT_TOKEN key, refer to https://smartui.lambdatest.com');
+    else {
+        logger.error('[smartui] Error: please set PROJECT_TOKEN key, refer to https://smartui.lambdatest.com');
         process.exit(constants.ERROR_CATCHALL);
     }
 };
@@ -94,7 +95,8 @@ async function validateLatestBuild(options) {
         params: {
             branch: commit.branch,
             commitId: commit.shortHash
-        }})
+        }
+    })
         .then(function (response) {
             if (response.data.status === 'Failure') {
                 console.log(`[smartui] Build with commit '${commit.shortHash}' on branch '${commit.branch}' already exists.`);
@@ -198,12 +200,56 @@ function parse(file) {
     return JSON.parse(data);
 }
 
- // Verify Screenshot config 
-function validateScreenshotConfig(configFile) {
-    // Verify config file exists
+// Verify Screenshot config 
+function validateScreenshotConfig(configFile, logger) {
+    // Check for JSON extension
+    if (!isJSONFile(configFile)) {
+        logger.error('capture command only supports json file');
+        process.exit(constants.ERROR_CATCHALL);
+    }
+
+    // Check if file exists
+    if (configFile) {
+        try {
+            fs.accessSync(configFile, fs.constants.F_OK);
+        } catch (error) {
+            logger.error('Error: File does not exist ' + configFile);
+            process.exit(constants.ERROR_CATCHALL);
+        }
+
+    }
+
+
+    let screenshots = {};
+    // Check JSON Parse Error
+    if (configFile) {
+        try {
+            screenshots = parse(configFile)
+        } catch (error) {
+            logger.error('Error: Invalid json file');
+            process.exit(constants.ERROR_CATCHALL);
+        }
+    }
+
+    logger.debug(screenshots)
+
+    //Check for URLs should not be empty
+    for (const screenshot of screenshots) {
+        if(!screenshot.url || screenshot.url == ''){
+            logger.error('Error: Missing required URL for screenshot');
+            process.exit(constants.ERROR_CATCHALL);
+        }
+        //Check for URLs should valid (like abcd in URL)
+        try {
+            new URL(screenshot.url);
+        } catch (error) {
+            logger.error('Error: Invalid screenshot URL: '+screenshot.url);
+            process.exit(constants.ERROR_CATCHALL);
+        }
+    }
 }
 
-module.exports = { 
+module.exports = {
     ValidationError,
     validateProjectToken,
     validateStorybookUrl,
