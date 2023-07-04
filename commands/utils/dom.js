@@ -98,15 +98,15 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     });
 };
 
-async function fetchDOM(screenshots, options) {
-    console.log("fetchDOM started")
+async function fetchDOM(screenshots, options, logger) {
+    logger.debug("fetchDOM started")
     const createBrowser = require('browserless')
     const browser = createBrowser()
 
     if (!fs.existsSync('doms')) {
         fs.mkdir('doms', (err) => {
             if (err) {
-                console.error(err);
+                logger.error(err);
                 process.exit(constants.ERROR_CATCHALL);
             }
         });
@@ -114,9 +114,9 @@ async function fetchDOM(screenshots, options) {
 
     //TODO: Make this async
     for (const screenshot of screenshots) {
-        console.log(screenshot)
+        logger.debug(screenshot)
         let id = generateId(screenshot.name)
-        console.log(id)
+        logger.debug(id)
         screenshot.id = id
         const browserless = await browser.createContext()
 
@@ -135,16 +135,16 @@ async function fetchDOM(screenshots, options) {
                 let image = new URL(element.getAttribute('src'), `https://${host}`).href;
                 element.setAttribute('src', image);
             } catch (e) {
-                console.log(e);
+                logger.error(e);
             }
         }
 
         try {
-            console.log("Creating CSS DOM")
+            logger.debug("Creating CSS DOM")
             await serializeCSSOM(dom, clone);
             fs.writeFileSync(`doms/${id}.html`, clone.serialize());
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
         await browserless.destroyContext();
         //Async upload
@@ -191,12 +191,12 @@ function generateId(str) {
     return noSpacesStr;
 }
 
-async function upload(screenshots, options) {
+async function upload(screenshots, options,logger) {
     // Create form
     let commit = await getLastCommit();
     const form = new formData();
-    console.log("Upload Started with ", screenshots)
-
+    logger.info("Upload screenshot started")
+    logger.debug(screenshots)
     for (const screenshot of screenshots) {
         const file = fs.readFileSync(`doms/${screenshot.id}.html`);
         form.append('files', file, `${screenshot.name}.html`);
@@ -222,14 +222,14 @@ async function upload(screenshots, options) {
             ...form.getHeaders()
         }
     }).then(async function (response) {
-        console.log('[smartui] Build URL: ', response.data.buildURL);
-        console.log('[smartui] Build in progress...');
+        logger.info('[smartui] Build URL: '+ response.data.buildURL);
+        logger.info('[smartui] Build in progress...');
         await shortPolling(response.data.buildId, 0, options);
     }).catch(function (error) {
         if (error.response) {
-            console.log('[smartui] Build failed: Error: ', error.response.data.message);
+            logger.error('[smartui] Build failed: Error: '+ error.response.data.message);
         } else {
-            console.log('[smartui] Build failed: Error: ', error.message);
+            logger.error('[smartui] Build failed: Error: '+ error.message);
         }
     });
 }
