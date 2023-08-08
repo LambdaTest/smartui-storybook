@@ -16,6 +16,7 @@ async function shortPolling(buildId, retries = 0, options) {
                     console.log('[smartui] Build successful\n');
                     console.log('[smartui] Build details:\n',
                         'Build URL: ', response.data.buildURL, '\n',
+                        'Build ID: ', buildId, '\n',
                         'Build Name: ', response.data.buildName, '\n',
                         'Total Screenshots: ', response.data.totalScreenshots, '\n',
                         'Approved: ', response.data.buildResults.approved, '\n',
