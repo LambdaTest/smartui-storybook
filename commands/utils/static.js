@@ -58,7 +58,7 @@ function filterStories(dirPath, storybookConfig) {
 	stories = JSON.parse(fs.readFileSync(`${dirPath}/stories.json`)).stories;
 
 	for (const [storyId, storyInfo] of Object.entries(stories)) {
-		if (!skipStory(storyInfo.name, storybookConfig)) {
+		if (!skipStory(storyInfo, storybookConfig)) {
 			storyIds.push(storyId);
 		}
 	}
