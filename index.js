@@ -3,14 +3,10 @@
 const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
-const { validateProjectToken, validateLatestBuild, validateConfig, isJSONFile, parse, validateScreenshotConfig } = require('./commands/utils/validate');
+const { validateProjectToken, validateLatestBuild, validateConfig } = require('./commands/utils/validate');
 const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
-const fs = require('fs');
-const { capture } = require('./commands/capture');
-var { constants } = require('./commands/utils/constants');
-
 
 program
     .name('smartui')
@@ -52,25 +48,6 @@ program.command('storybook')
         await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
         storybook(serve, options);
-    });
-
-program.command('capture <file>')
-    .description('Process JSON file and Capture URLs')
-    .option('-c --config <file>', 'Config file path')
-    .action(async (file, options) => {
-        console.log('SmartUI Capture CLI v' + version);
-        console.log('\n');
-        if(!isJSONFile(file)){
-            console.log('capture command only supports json file');   
-            process.exit(constants.ERROR_CATCHALL);
-        }
-        screenshots = parse(file);
-        console.log(screenshots);
-        options.env = program.opts().env || 'prod';
-        await validateScreenshotConfig(screenshots);
-        //verify PROJECT_TOKEN
-        await validateProjectToken(options);
-        await capture(screenshots, options);
     });
 
 program.parse();

@@ -27,8 +27,4 @@ constants.ERROR_CATCHALL = 1
 constants.ERROR_BUILD_ALREADY_EXISTS = 3
 constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
 
-constants.ALL = "all";
-constants.CAPTURE_COMMAND = "capture";
-
-
 module.exports = { constants };
