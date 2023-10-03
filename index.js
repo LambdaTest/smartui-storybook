@@ -4,7 +4,7 @@ const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
 const { validateProjectToken, validateLatestBuild, validateConfig, isJSONFile, parse, validateScreenshotConfig } = require('./commands/utils/validate');
-const { createConfig, createScreenshotConfig } = require('./commands/config');
+const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
 const fs = require('fs');
@@ -31,15 +31,6 @@ configCommand.command('create')
         console.log('\n');
 
         createConfig(filepath);
-    });
-
-configCommand.command('screenshot')
-    .description('Create Screenshot config file')
-    .argument('[filepath]', 'Optional config filepath')
-    .action(async function(filepath, options) {
-        console.log('SmartUI Storybook CLI v' + version);
-        console.log('\n');
-        createScreenshotConfig(filepath);
     });
 
 program.command('storybook')
