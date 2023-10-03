@@ -1,9 +1,9 @@
 const fs = require('fs');
 
-function cleanup(logger){
+function cleanup(){
     fs.rm('doms', { recursive: true }, (err) => {
         if (err) {
-            return logger.error(err);
+            return console.error(err);
         }
     });
     return true

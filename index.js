@@ -3,12 +3,14 @@
 const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
-const { validateProjectToken, validateLatestBuild, validateConfig, parse, validateScreenshotConfig } = require('./commands/utils/validate');
+const { validateProjectToken, validateLatestBuild, validateConfig, isJSONFile, parse, validateScreenshotConfig } = require('./commands/utils/validate');
 const { createConfig, createScreenshotConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
+const fs = require('fs');
 const { capture } = require('./commands/capture');
-const setupLogger = require('./log/logger');
+var { constants } = require('./commands/utils/constants');
+
 
 program
     .name('smartui')
@@ -23,23 +25,21 @@ configCommand.command('create')
     .description('Create LambdaTest SmartUI config file')
     .argument('[filepath]', 'Optional config filepath')
     .action(async function(filepath, options) {
-        const logger = await setupLogger();
-        logger.info('SmartUI Storybook CLI v' + version);
-        logger.info('\n');
         options.env = program.opts().env || 'prod';
-        await checkUpdate(version, options, logger);
+        console.log('SmartUI Storybook CLI v' + version);
+        await checkUpdate(version, options);
+        console.log('\n');
 
-        createConfig(filepath,logger);
+        createConfig(filepath);
     });
 
 configCommand.command('screenshot')
     .description('Create Screenshot config file')
     .argument('[filepath]', 'Optional config filepath')
     .action(async function(filepath, options) {
-        const logger = await setupLogger();
-        logger.info('SmartUI Storybook CLI v' + version);
-        logger.info('\n');
-        createScreenshotConfig(filepath, logger);
+        console.log('SmartUI Storybook CLI v' + version);
+        console.log('\n');
+        createScreenshotConfig(filepath);
     });
 
 program.command('storybook')
@@ -49,16 +49,16 @@ program.command('storybook')
     .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
-        const logger = await setupLogger();
+        
         console.log('SmartUI Storybook CLI v' + version);
-        await checkUpdate(version, options, logger);
+        await checkUpdate(version, options);
         console.log('\n');
 
         if (options.config) {
             options.config = validateConfig(options.config);
         }
 
-        await validateProjectToken(options, logger);
+        await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
         storybook(serve, options);
     });
@@ -67,17 +67,19 @@ program.command('capture <file>')
     .description('Process JSON file and Capture URLs')
     .option('-c --config <file>', 'Config file path')
     .action(async (file, options) => {
-        const logger = await setupLogger();
-        logger.info('SmartUI Storybook CLI v' + version);
-        logger.info('\n');
-        validateScreenshotConfig(file,logger);
-
+        console.log('SmartUI Capture CLI v' + version);
+        console.log('\n');
+        if(!isJSONFile(file)){
+            console.log('capture command only supports json file');   
+            process.exit(constants.ERROR_CATCHALL);
+        }
         screenshots = parse(file);
-        logger.debug(screenshots);
+        console.log(screenshots);
         options.env = program.opts().env || 'prod';
+        await validateScreenshotConfig(screenshots);
         //verify PROJECT_TOKEN
-        await validateProjectToken(options,logger);
-        await capture(screenshots, options, logger);
+        await validateProjectToken(options);
+        await capture(screenshots, options);
     });
 
 program.parse();
