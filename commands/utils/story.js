@@ -1,12 +1,17 @@
 // Returns true or false if the story should be skipped based on include and exclude config
-function skipStory(name, config) {
+function skipStory(story, config) {
+	// skip story if it's docs
+	if (story.parameters && story.parameters.docsOnly) {
+		return true;
+	}
+
     let matches = regexp => {
-      if (typeof regexp === 'string') {
-        let [, parsed, flags] = /^\/(.+)\/(\w+)?$/.exec(regexp) || [];
-        regexp = new RegExp(parsed ?? regexp, flags);
-      }
+		if (typeof regexp === 'string') {
+			let [, parsed, flags] = /^\/(.+)\/(\w+)?$/.exec(regexp) || [];
+			regexp = new RegExp(parsed ?? regexp, flags);
+		}
   
-      return regexp?.test?.(name);
+      	return regexp?.test?.(story.name);
     };
   
     let include = [].concat(config?.include).filter(Boolean);
@@ -15,6 +20,6 @@ function skipStory(name, config) {
     let skip = include?.length ? !include.some(matches) : false;
     if (!skip && !exclude?.some(matches)) return false;
     return true;
-  };
+};
 
-  module.exports = { skipStory };
+module.exports = { skipStory };

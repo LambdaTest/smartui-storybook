@@ -30,7 +30,7 @@ async function storybook(serve, options) {
             .then(async function (response) {
                 let stories = {}
                 for (const [storyId, storyInfo] of Object.entries(response.data.stories)) {
-                    if (!skipStory(storyInfo.name, storybookConfig)) {
+                    if (!skipStory(storyInfo, storybookConfig)) {
                         stories[storyId] = {
                             name: storyInfo.name,
                             kind: storyInfo.kind,
