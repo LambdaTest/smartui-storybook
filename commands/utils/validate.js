@@ -2,7 +2,6 @@ const axios = require('axios');
 var { constants } = require('./constants');
 const fs = require('fs');
 const { getLastCommit } = require('./git');
-const path = require('path');
 
 const MAX_RESOLUTIONS = 5
 const MIN_RESOLUTION_WIDTH = 320
@@ -18,7 +17,6 @@ class ValidationError extends Error {
 }
 
 function validateProjectToken(options) {
-    console.log("options", options);
     if (process.env.PROJECT_TOKEN) { 
         return axios.get(constants[options.env].AUTH_URL, {
             headers: {
@@ -39,7 +37,7 @@ function validateProjectToken(options) {
             }); 
     }
     else { 
-        console.log('[smartui] Error: please set PROJECT_TOKEN key, refer to https://smartui.lambdatest.com');
+        console.log('[smartui] Error: No PROJECT_TOKEN set');
         process.exit(constants.ERROR_CATCHALL);
     }
 };
@@ -187,22 +185,6 @@ function validateConfigResolutions(resolutions) {
     return res
 }
 
-function isJSONFile(filePath) {
-    const extension = path.extname(filePath);
-    return extension.toLowerCase() === '.json';
-}
-
-// Parse the JSON data
-function parse(file) {
-    const data = fs.readFileSync(file, 'utf-8');
-    return JSON.parse(data);
-}
-
- // Verify Screenshot config 
-function validateScreenshotConfig(configFile) {
-    // Verify config file exists
-}
-
 module.exports = { 
     ValidationError,
     validateProjectToken,
@@ -211,8 +193,5 @@ module.exports = {
     validateLatestBuild,
     validateConfig,
     validateConfigBrowsers,
-    validateConfigResolutions,
-    isJSONFile,
-    parse,
-    validateScreenshotConfig
+    validateConfigResolutions
 };
