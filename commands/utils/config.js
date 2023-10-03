@@ -15,15 +15,4 @@ const defaultSmartUIConfig = {
     }
 };
 
-const defaultScreenshotConfig = [
-    {
-        "name": "lambdatest-home-page",
-        "url": "https://www.lambdatest.com"
-    },
-    {
-        "name": "example-page",
-        "url": "https://example.com/"
-    }
-]
-
-module.exports = { defaultSmartUIConfig, defaultScreenshotConfig }
+module.exports = { defaultSmartUIConfig }
