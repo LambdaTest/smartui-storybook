@@ -125,7 +125,8 @@ function validateConfig(configFile) {
 
     try {
         validateConfigBrowsers(storybookConfig.browsers);
-        storybookConfig.resolutions = validateConfigResolutions(storybookConfig.resolutions);
+        resolutions = storybookConfig.resolutions || storybookConfig.viewports
+        storybookConfig.resolutions = validateConfigResolutions(resolutions);
     } catch (error) {
         console.log(`[smartui] Error: Invalid config, ${error.message}`);
         process.exit(constants.ERROR_CATCHALL);
@@ -136,7 +137,7 @@ function validateConfig(configFile) {
         storybookConfig.waitForTimeout = 0;
     } else if (storybookConfig.waitForTimeout <= 0 || storybookConfig.waitForTimeout > 30000) {
         console.log('[smartui] Warning: Invalid config, value of waitForTimeout must be > 0 and <= 30000');
-        console.log('If you do not wish to include waitForTimeout parameter, remove it from the config file.');
+        console.log('[smartui] If you do not wish to include waitForTimeout parameter, remove it from the config file.');
         storybookConfig.waitForTimeout = 0;
     }
 
