@@ -161,10 +161,10 @@ function validateConfigBrowsers(browsers) {
 
 function validateConfigResolutions(resolutions) {
     if (!Array.isArray(resolutions)) {
-        throw new ValidationError('invalid resolutions.');
+        throw new ValidationError('Invalid viewports config. Please add atleast one viewport.');
     }
     if (resolutions.length == 0) {
-        throw new ValidationError('empty resolutions list in config.');
+        throw new ValidationError('Empty viewports list in config.');
     }
     if (resolutions.length > 5) {
         throw new ValidationError(`max resolutions: ${MAX_RESOLUTIONS}`);
@@ -172,7 +172,7 @@ function validateConfigResolutions(resolutions) {
     let res = [];
     resolutions.forEach(element => {
         if (!Array.isArray(element) || element.length == 0 || element.length > 2) {
-            throw new ValidationError('invalid resolutions.');
+            throw new ValidationError('Invalid elements in viewports config.');
         }
         let width = element[0];
         let height = element[1];
