@@ -227,7 +227,6 @@ function validateCustomViewPorts(customViewports) {
         element.styles.width = width;
         element.styles.height = height;
     });
-    console.log(customViewports)
     return
 }
 
