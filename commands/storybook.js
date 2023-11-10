@@ -101,12 +101,17 @@ async function storybook(serve, options) {
                 // Prepare payload data
                 let browsers = []
                 let resolutions = []
+
                 storybookConfig.browsers.forEach(element => {
                     browsers.push(element.toLowerCase());
                 });
-                storybookConfig.resolutions.forEach(element => {
-                    resolutions.push({ width: element[0], height: element[1] });
-                });
+                let rs = storybookConfig.resolutions || storybookConfig.viewports
+                if (rs && rs.length){
+                    rs.forEach(element => {
+                        resolutions.push({ width: element[0], height: element[1] });
+                    });
+                }
+
                 let commit = await getLastCommit();
                 let payload = {
                     downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
