@@ -125,7 +125,10 @@ function validateConfig(configFile) {
 
     try {
         validateConfigBrowsers(storybookConfig.browsers);
-        storybookConfig.resolutions = validateConfigResolutions(storybookConfig.resolutions);
+        resolutions = storybookConfig.resolutions || storybookConfig.viewports
+        storybookConfig.resolutions = validateConfigResolutions(resolutions);
+        storybookConfig.viewports = storybookConfig.resolutions;
+        validateCustomViewPorts(storybookConfig.customViewports)
     } catch (error) {
         console.log(`[smartui] Error: Invalid config, ${error.message}`);
         process.exit(constants.ERROR_CATCHALL);
@@ -136,7 +139,7 @@ function validateConfig(configFile) {
         storybookConfig.waitForTimeout = 0;
     } else if (storybookConfig.waitForTimeout <= 0 || storybookConfig.waitForTimeout > 30000) {
         console.log('[smartui] Warning: Invalid config, value of waitForTimeout must be > 0 and <= 30000');
-        console.log('If you do not wish to include waitForTimeout parameter, remove it from the config file.');
+        console.log('[smartui] If you do not wish to include waitForTimeout parameter, remove it from the config file.');
         storybookConfig.waitForTimeout = 0;
     }
 
@@ -158,10 +161,10 @@ function validateConfigBrowsers(browsers) {
 
 function validateConfigResolutions(resolutions) {
     if (!Array.isArray(resolutions)) {
-        throw new ValidationError('invalid resolutions.');
+        throw new ValidationError('Invalid viewports config. Please add atleast one viewport.');
     }
     if (resolutions.length == 0) {
-        throw new ValidationError('empty resolutions list in config.');
+        throw new ValidationError('Empty viewports list in config.');
     }
     if (resolutions.length > 5) {
         throw new ValidationError(`max resolutions: ${MAX_RESOLUTIONS}`);
@@ -169,20 +172,62 @@ function validateConfigResolutions(resolutions) {
     let res = [];
     resolutions.forEach(element => {
         if (!Array.isArray(element) || element.length == 0 || element.length > 2) {
-            throw new ValidationError('invalid resolutions.');
+            throw new ValidationError('Invalid elements in viewports config.');
         }
         let width = element[0];
         let height = element[1];
-        if (typeof width != 'number' || width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
+        if (typeof width != 'number') {
+            width = Number(width);
+        }
+        if (typeof height != 'number') {
+            height = Number(height);
+        }
+        if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
             throw new ValidationError(`width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
         }
-        if (height && (typeof height != 'number' || height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+        if (height & ( height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
             throw new ValidationError(`height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
         }
         res.push([width, height || 0]);
     });
 
     return res
+}
+
+
+function validateCustomViewPorts(customViewports) {
+    if (!Array.isArray(customViewports)) {
+        return
+    }
+    if (customViewports && customViewports.length == 0) {
+        return
+    }
+    customViewports.forEach(element => {
+        if (!Array.isArray(element.stories) || element.stories == 0) {
+            throw new ValidationError('Missing `stories` in customViewports config. please check the config file');
+        }
+        if(!element.styles || !element.styles?.width ){
+            throw new ValidationError('Missing `styles` in customViewports key. Please check the config file');
+        }
+
+        let width = element.styles.width;
+        let height = element.styles.height;
+        if (width && typeof width != 'number') {
+            width = Number(width);
+        }
+        if (height && typeof height != 'number') {
+            height = Number(height);
+        }
+        if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
+            throw new ValidationError(`customViewports.styles width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
+        }
+        if (height & ( height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+            throw new ValidationError(`customViewports.styles height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
+        }
+        element.styles.width = width;
+        element.styles.height = height;
+    });
+    return
 }
 
 module.exports = { 
@@ -193,5 +238,6 @@ module.exports = {
     validateLatestBuild,
     validateConfig,
     validateConfigBrowsers,
-    validateConfigResolutions
+    validateConfigResolutions,
+    validateCustomViewPorts
 };

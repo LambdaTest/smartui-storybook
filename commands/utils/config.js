@@ -6,12 +6,13 @@ const defaultSmartUIConfig = {
             'safari',
             'edge'
         ],
-        resolutions: [
+        viewports: [
             [1920, 1080]
         ],
         waitForTimeout: 0,
         include: [],
-        exclude: []
+        exclude: [],
+        customViewports: []
     }
 };
 
