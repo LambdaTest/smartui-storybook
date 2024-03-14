@@ -208,8 +208,14 @@ function validateCustomViewPorts(customViewports) {
         if (!Array.isArray(element.stories) || element.stories == 0) {
             throw new ValidationError('Missing `stories` in customViewports config. please check the config file');
         }
-        if (!element.styles || !element.waitForTimeout) {
-            throw new ValidationError('Missing styles and waitForTimeout. Specify either of them. please check the config file');
+        if (element.styles) {
+            if (!element.styles.width) {
+                throw new ValidationError('Missing width in styles. please check the config file');
+            }
+        } else {
+            if (!element.waitForTimeout) {
+                throw new ValidationError('Missing styles and waitForTimeout. Specify either of them. please check the config file');
+            }
         }
 
         let width = element.styles.width;
