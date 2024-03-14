@@ -17,11 +17,12 @@ class ValidationError extends Error {
 }
 
 function validateProjectToken(options) {
-    if (process.env.PROJECT_TOKEN) { 
+    if (process.env.PROJECT_TOKEN) {
         return axios.get(constants[options.env].AUTH_URL, {
             headers: {
                 projectToken: process.env.PROJECT_TOKEN
-            }})
+            }
+        })
             .then(function (response) {
                 console.log('[smartui] Project Token Validated');
             })
@@ -34,9 +35,9 @@ function validateProjectToken(options) {
                     console.log('[smartui] Project Token not validated. Error: ', error.message);
                 }
                 process.exit(constants.ERROR_CATCHALL);
-            }); 
+            });
     }
-    else { 
+    else {
         console.log('[smartui] Error: No PROJECT_TOKEN set');
         process.exit(constants.ERROR_CATCHALL);
     }
@@ -92,7 +93,8 @@ async function validateLatestBuild(options) {
         params: {
             branch: commit.branch,
             commitId: commit.shortHash
-        }})
+        }
+    })
         .then(function (response) {
             if (response.data.status === 'Failure') {
                 console.log(`[smartui] Build with commit '${commit.shortHash}' on branch '${commit.branch}' already exists.`);
@@ -185,7 +187,7 @@ function validateConfigResolutions(resolutions) {
         if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
             throw new ValidationError(`width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
         }
-        if (height & ( height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+        if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
             throw new ValidationError(`height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
         }
         res.push([width, height || 0]);
@@ -206,8 +208,8 @@ function validateCustomViewPorts(customViewports) {
         if (!Array.isArray(element.stories) || element.stories == 0) {
             throw new ValidationError('Missing `stories` in customViewports config. please check the config file');
         }
-        if(!element.styles || !element.styles?.width ){
-            throw new ValidationError('Missing `styles` in customViewports key. Please check the config file');
+        if (!element.styles || !element.waitForTimeout) {
+            throw new ValidationError('Missing styles and waitForTimeout. Specify either of them. please check the config file');
         }
 
         let width = element.styles.width;
@@ -221,7 +223,7 @@ function validateCustomViewPorts(customViewports) {
         if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
             throw new ValidationError(`customViewports.styles width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
         }
-        if (height & ( height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+        if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
             throw new ValidationError(`customViewports.styles height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
         }
         element.styles.width = width;
@@ -230,7 +232,7 @@ function validateCustomViewPorts(customViewports) {
     return
 }
 
-module.exports = { 
+module.exports = {
     ValidationError,
     validateProjectToken,
     validateStorybookUrl,
