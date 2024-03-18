@@ -212,28 +212,28 @@ function validateCustomViewPorts(customViewports) {
             if (!element.styles?.width) {
                 throw new ValidationError('Missing width in styles. please check the config file');
             }
+            let width = element.styles.width;
+            let height = element.styles.height;
+            if (width && typeof width != 'number') {
+                width = Number(width);
+            }
+            if (height && typeof height != 'number') {
+                height = Number(height);
+            }
+            if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
+                throw new ValidationError(`customViewports.styles width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
+            }
+            if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+                throw new ValidationError(`customViewports.styles height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
+            }
+            element.styles.width = width;
+            element.styles.height = height;
         } else {
             if (!element.waitForTimeout) {
                 throw new ValidationError('Missing styles and waitForTimeout. Specify either of them. please check the config file');
             }
         }
 
-        let width = element.styles.width;
-        let height = element.styles.height;
-        if (width && typeof width != 'number') {
-            width = Number(width);
-        }
-        if (height && typeof height != 'number') {
-            height = Number(height);
-        }
-        if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
-            throw new ValidationError(`customViewports.styles width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
-        }
-        if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
-            throw new ValidationError(`customViewports.styles height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
-        }
-        element.styles.width = width;
-        element.styles.height = height;
     });
     return
 }
