@@ -209,7 +209,7 @@ function validateCustomViewPorts(customViewports) {
             throw new ValidationError('Missing `stories` in customViewports config. please check the config file');
         }
         if (element.styles) {
-            if (!element.styles.width) {
+            if (!element.styles?.width) {
                 throw new ValidationError('Missing width in styles. please check the config file');
             }
         } else {
