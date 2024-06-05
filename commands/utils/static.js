@@ -55,7 +55,12 @@ async function compress(dirPath, uploadId) {
 
 function filterStories(dirPath, storybookConfig) {
 	let storyIds = [];
-	stories = JSON.parse(fs.readFileSync(`${dirPath}/stories.json`)).stories;
+	let stories = []
+	if (fs.existsSync((`${dirPath}/stories.json`))){
+		stories = JSON.parse(fs.readFileSync(`${dirPath}/stories.json`)).stories;
+	} else if(fs.existsSync((`${dirPath}/index.json`))){
+		stories = JSON.parse(fs.readFileSync(`${dirPath}/index.json`)).entries;
+	}
 
 	for (const [storyId, storyInfo] of Object.entries(stories)) {
 		if (!skipStory(storyInfo, storybookConfig)) {

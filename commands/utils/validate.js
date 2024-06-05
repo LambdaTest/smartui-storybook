@@ -78,10 +78,11 @@ async function validateStorybookDir(dir) {
         console.log(`[smartui] Given directory is not a storybook static directory. Error: No index.html found`);
         process.exit(constants.ERROR_CATCHALL);
     }
-    if (!fs.existsSync(dir + '/stories.json')) {
-        console.log(`[smartui] Given directory is not a storybook static directory. Error: No stories.json found`);
+    if (!fs.existsSync(dir + '/stories.json') && !fs.existsSync(dir + '/index.json')) {
+        console.log(`[smartui] Given directory is not a storybook static directory. Error: stories.json or index.json not found`);
         process.exit(constants.ERROR_CATCHALL);
     }
+
 };
 
 async function validateLatestBuild(options) {
