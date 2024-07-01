@@ -3,7 +3,11 @@ const Table = require('cli-table3');
 var { constants } = require('./constants');
 
 var INTERVAL = 2000
-const MAX_INTERVAL = 512000
+const MAX_EXPONENTIAL_INTERVAL = 512000 // 512 seconds (8.5 minutes)
+const FIXED_INTERVAL = 60000 // 1 minute in milliseconds
+const MAX_INTERVAL = 1800000; // 30 minutes in milliseconds
+var CURRENT_TIME = 0
+var FLAG = 0
 
 async function shortPolling(buildId, retries = 0, options) {
     await axios.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
@@ -55,17 +59,24 @@ async function shortPolling(buildId, retries = 0, options) {
                     return;
                 } else {
                     if (response.data.screenshots && response.data.screenshots.length > 0) {
-                        // TODO: show Screenshots processed current/total 
+                        // TODO: show Screenshots processed current/total
                         console.log('[smartui] Screenshots compared: ', response.data.screenshots.length)
                     }
                 }
             }
-            
-            // Double the INTERVAL, up to the maximum INTERVAL of 512 secs (so ~15 mins in total)
-            INTERVAL = Math.min(INTERVAL * 2, MAX_INTERVAL);
-            if (INTERVAL == MAX_INTERVAL) {
+
+            CURRENT_TIME = CURRENT_TIME + INTERVAL
+            if (CURRENT_TIME == MAX_INTERVAL) {
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
                 return;
+            }
+
+            // Adjust the interval
+            if (Math.min(INTERVAL * 2, MAX_EXPONENTIAL_INTERVAL) < MAX_EXPONENTIAL_INTERVAL && FLAG == 0) {
+                INTERVAL = Math.min(INTERVAL * 2, MAX_EXPONENTIAL_INTERVAL);
+            } else {
+                FLAG = 1
+                INTERVAL = FIXED_INTERVAL; // Switch to fixed interval after reaching 256 seconds
             }
 
             setTimeout(function () {
