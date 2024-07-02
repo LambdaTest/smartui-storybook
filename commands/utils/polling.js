@@ -32,16 +32,18 @@ async function shortPolling(buildId, retries = 0, options) {
                         import('chalk').then((chalk) => {
                             const table = new Table({
                                 head: [
+                                    {content: chalk.default.white('Sr. Number'), hAlign: 'center'},
                                     {content: chalk.default.white('Story'), hAlign: 'center'},
                                     {content: chalk.default.white('Mis-match %'), hAlign: 'center'},
                                 ]
                             });
-                            response.data.screenshots.forEach(screenshot => {
-                                let mismatch = screenshot.mismatchPercentage
+                            response.data.screenshots.forEach((screenshot, index) => {
+                                let mismatch = screenshot.mismatchPercentage;
                                 table.push([
+                                    chalk.default.yellow(index + 1),
                                     chalk.default.yellow(screenshot.storyName),
                                     mismatch > 0 ? chalk.default.red(mismatch) : chalk.default.green(mismatch)
-                                ])
+                                ]);
                             });
                             console.log(table.toString());
 
