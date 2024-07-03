@@ -68,7 +68,7 @@ async function shortPolling(buildId, retries = 0, options) {
             }
 
             CURRENT_TIME = CURRENT_TIME + INTERVAL
-            if (CURRENT_TIME == MAX_INTERVAL) {
+            if (CURRENT_TIME >= MAX_INTERVAL) {
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
                 return;
             }
