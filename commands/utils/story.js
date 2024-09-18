@@ -5,6 +5,7 @@ function skipStory(story, config) {
 		return true;
 	}
 
+	// skip story if it's docs for version 8
 	if(story.type && story.type === 'docs'){
 		return true;
 	}
