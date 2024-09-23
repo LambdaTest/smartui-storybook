@@ -1,7 +1,12 @@
 // Returns true or false if the story should be skipped based on include and exclude config
 function skipStory(story, config) {
-	// skip story if it's docs
+	// skip story if it's docs for version 7
 	if (story.parameters && story.parameters.docsOnly) {
+		return true;
+	}
+
+	// skip story if it's docs for version 8
+	if(story.type && story.type === 'docs'){
 		return true;
 	}
 
