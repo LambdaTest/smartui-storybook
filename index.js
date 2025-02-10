@@ -34,13 +34,17 @@ program.command('storybook')
     .argument('<url|directory>', 'Storybook url or static build directory')
     .option('-c --config <file>', 'Config file path')
     .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
+    .option('--buildName <string>', 'Specify the build name for the pipeline')
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         
         console.log('SmartUI Storybook CLI v' + version);
         await checkUpdate(version, options);
         console.log('\n');
-
+        if (options.buildName === '') {
+            console.log(`Error: The '--buildName' option cannot be an empty string.`);
+            process.exit(1);
+        }
         if (options.config) {
             options.config = validateConfig(options.config);
         }

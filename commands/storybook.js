@@ -12,6 +12,7 @@ const { shortPolling } = require('./utils/polling');
 async function storybook(serve, options) {
     let type = /^https?:\/\//.test(serve) ? 'url' : 'dir';
     let storybookConfig = options.config ? options.config : defaultSmartUIConfig.storybook;
+    const buildName = options.buildName? options.buildName : "";
 
     if (type === 'url') {
         await validateStorybookUrl(serve);
@@ -130,7 +131,8 @@ async function storybook(serve, options) {
                         commitAuthor: commit.author.name,
                         commitMessage: commit.subject,
                         githubURL: process.env.GITHUB_URL || '',
-                    }
+                    },
+                    buildName: buildName
                 }
 
                 // Call static render API
