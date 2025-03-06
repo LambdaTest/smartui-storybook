@@ -41,8 +41,13 @@ program.command('storybook')
         console.log('SmartUI Storybook CLI v' + version);
         await checkUpdate(version, options);
         console.log('\n');
-        if (options.buildName === '') {
-            console.log(`Error: The '--buildName' option cannot be an empty string.`);
+        // Check if buildName is undefined or empty string
+        if (options.buildName === undefined || options.buildName === '') {
+            const error = {
+                "error": "MISSING_BUILD_NAME",
+                "message": "The --buildName flag requires a value."
+            };
+            console.log(JSON.stringify(error, null, 2));
             process.exit(1);
         }
         if (options.config) {

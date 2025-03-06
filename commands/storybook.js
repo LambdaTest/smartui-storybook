@@ -114,6 +114,10 @@ async function storybook(serve, options) {
                 }
 
                 let commit = await getLastCommit();
+                let baseLine;
+                if (process.env.BASELINE_BRANCH !== undefined && process.env.BASELINE_BRANCH !== null && process.env.BASELINE_BRANCH !== '')
+                    baseLine = process.env.BASELINE_BRANCH 
+                console.log(`Baseline branch set :${baseLine}`)
                 let payload = {
                     downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
                     uploadId: uploadId,
@@ -126,13 +130,14 @@ async function storybook(serve, options) {
                         customViewports: storybookConfig.customViewports
                     },
                     git: {
-                        branch: commit.branch,
-                        commitId: commit.shortHash,
-                        commitAuthor: commit.author.name,
-                        commitMessage: commit.subject,
+                        branch: process.env.BRANCH_NAME ? process.env.BRANCH_NAME: commit.branch, 
+                        commitId: commit.shortHash, 
+                        commitAuthor: commit.author.name, 
+                        commitMessage: commit.subject, 
                         githubURL: process.env.GITHUB_URL || '',
                     },
-                    buildName: buildName
+                    buildName: buildName,
+                    baseline: baseLine?? "",
                 }
 
                 // Call static render API
