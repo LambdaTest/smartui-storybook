@@ -114,9 +114,10 @@ async function storybook(serve, options) {
                 }
 
                 let commit = await getLastCommit();
-                let baseLine;
-                if (process.env.BASELINE_BRANCH !== null && process.env.BASELINE_BRANCH !== undefined){
-                    if(process.env.BASELINE_BRANCH === ''){
+                let baseLine = process.env.BASELINE_BRANCH;
+                let currentBranch = process.env.CURRENT_BRANCH;
+                if (baseLine !== null && baseLine !== undefined){
+                    if(baseLine === ''){
                         const error = {
                             "error": "MISSING_BRANCH_NAME",
                             "message": "Error : The baseline branch name environment variable cannot be empty."
@@ -124,12 +125,10 @@ async function storybook(serve, options) {
                         console.log(JSON.stringify(error, null, 2));
                         process.exit(1);
                     }
-                        baseLine = process.env.BASELINE_BRANCH 
                 }
                     
-                console.log(`Baseline branch set to: ${baseLine}`)
-                if(process.env.CURRENT_BRANCH !== null && process.env.CURRENT_BRANCH !==undefined){
-                    if(process.env.CURRENT_BRANCH === ''){
+                if(currentBranch !== null && currentBranch !==undefined){
+                    if(currentBranch === ''){
                         const error = {
                             "error": "MISSING_BRANCH_NAME",
                             "message": "Error : The current branch name environment variable cannot be empty."
@@ -150,8 +149,8 @@ async function storybook(serve, options) {
                         customViewports: storybookConfig.customViewports
                     },
                     git: {
-                        branch: process.env.CURRENT_BRANCH || commit.branch|| '',  
-                        baselineBranch: process.env.BASELINE_BRANCH || '',
+                        branch: currentBranch || commit.branch|| '',  
+                        baselineBranch: baseLine || '',
                         commitId: commit.shortHash, 
                         commitAuthor: commit.author.name, 
                         commitMessage: commit.subject, 
