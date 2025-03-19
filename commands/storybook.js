@@ -155,11 +155,10 @@ async function storybook(serve, options) {
                         commitAuthor: commit.author.name, 
                         commitMessage: commit.subject, 
                         githubURL: process.env.GITHUB_URL || '',
-                        baseline : baseLine ?? ""
+                        baselineBranch : baseLine ?? ""
                     },
                     buildName: buildName,
                 }
-                console.log(`Current branch set to: ${git.branch}`);
 
                 // Call static render API
                 await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
