@@ -42,7 +42,7 @@ program.command('storybook')
         await checkUpdate(version, options);
         console.log('\n');
         // Check if buildName is undefined or empty string
-        if (options.buildName === undefined || options.buildName === '') {
+        if (options.buildName === '') {
             const error = {
                 "error": "MISSING_BUILD_NAME",
                 "message": "The --buildName flag requires a value."
