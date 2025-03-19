@@ -130,7 +130,7 @@ async function storybook(serve, options) {
                         customViewports: storybookConfig.customViewports
                     },
                     git: {
-                        branch: process.env.BRANCH_NAME ? process.env.BRANCH_NAME: commit.branch, 
+                        branch: process.env.CURRENT_BRANCH ? process.env.CURRENT_BRANCH: commit.branch, 
                         commitId: commit.shortHash, 
                         commitAuthor: commit.author.name, 
                         commitMessage: commit.subject, 
