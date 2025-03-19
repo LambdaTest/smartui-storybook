@@ -129,7 +129,7 @@ async function storybook(serve, options) {
                     
                 console.log(`Baseline branch set to: ${baseLine}`)
                 if(process.env.CURRENT_BRANCH !== null && process.env.CURRENT_BRANCH !==undefined){
-                    if(process.env.BASELINE_BRANCH === ''){
+                    if(process.env.CURRENT_BRANCH === ''){
                         const error = {
                             "error": "MISSING_BRANCH_NAME",
                             "message": "Error : The current branch name environment variable cannot be empty."
@@ -150,12 +150,12 @@ async function storybook(serve, options) {
                         customViewports: storybookConfig.customViewports
                     },
                     git: {
-                        branch: process.env.CURRENT_BRANCH ? process.env.CURRENT_BRANCH: commit.branch, 
+                        branch: process.env.CURRENT_BRANCH || commit.branch|| '',  
+                        baselineBranch: process.env.BASELINE_BRANCH || '',
                         commitId: commit.shortHash, 
                         commitAuthor: commit.author.name, 
                         commitMessage: commit.subject, 
                         githubURL: process.env.GITHUB_URL || '',
-                        baselineBranch : baseLine ?? ""
                     },
                     buildName: buildName,
                 }
