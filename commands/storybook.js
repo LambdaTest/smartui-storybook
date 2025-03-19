@@ -115,9 +115,29 @@ async function storybook(serve, options) {
 
                 let commit = await getLastCommit();
                 let baseLine;
-                if (process.env.BASELINE_BRANCH !== undefined && process.env.BASELINE_BRANCH !== null && process.env.BASELINE_BRANCH !== '')
-                    baseLine = process.env.BASELINE_BRANCH 
-                console.log(`Baseline branch set :${baseLine}`)
+                if (process.env.BASELINE_BRANCH !== null && process.env.BASELINE_BRANCH !== undefined){
+                    if(process.env.BASELINE_BRANCH === ''){
+                        const error = {
+                            "error": "MISSING_BRANCH_NAME",
+                            "message": "Error : The baseline branch name environment variable cannot be empty."
+                        };
+                        console.log(JSON.stringify(error, null, 2));
+                        process.exit(1);
+                    }
+                        baseLine = process.env.BASELINE_BRANCH 
+                }
+                    
+                console.log(`Baseline branch set to: ${baseLine}`)
+                if(process.env.CURRENT_BRANCH !== null && process.env.CURRENT_BRANCH !==undefined){
+                    if(process.env.BASELINE_BRANCH === ''){
+                        const error = {
+                            "error": "MISSING_BRANCH_NAME",
+                            "message": "Error : The current branch name environment variable cannot be empty."
+                        };
+                        console.log(JSON.stringify(error, null, 2));
+                        process.exit(1);
+                    }
+                }
                 let payload = {
                     downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
                     uploadId: uploadId,
@@ -135,10 +155,11 @@ async function storybook(serve, options) {
                         commitAuthor: commit.author.name, 
                         commitMessage: commit.subject, 
                         githubURL: process.env.GITHUB_URL || '',
+                        baseline : baseLine ?? ""
                     },
                     buildName: buildName,
-                    baseline: baseLine?? "",
                 }
+                console.log(`Current branch set to: ${git.branch}`);
 
                 // Call static render API
                 await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
