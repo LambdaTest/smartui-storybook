@@ -12,6 +12,7 @@ const { shortPolling } = require('./utils/polling');
 async function storybook(serve, options) {
     let type = /^https?:\/\//.test(serve) ? 'url' : 'dir';
     let storybookConfig = options.config ? options.config : defaultSmartUIConfig.storybook;
+    const buildName = options.buildName? options.buildName : "";
 
     if (type === 'url') {
         await validateStorybookUrl(serve);
@@ -113,6 +114,29 @@ async function storybook(serve, options) {
                 }
 
                 let commit = await getLastCommit();
+                let baseLine = process.env.BASELINE_BRANCH;
+                let currentBranch = process.env.CURRENT_BRANCH;
+                if (baseLine !== null && baseLine !== undefined){
+                    if(baseLine === ''){
+                        const error = {
+                            "error": "MISSING_BRANCH_NAME",
+                            "message": "Error : The baseline branch name environment variable cannot be empty."
+                        };
+                        console.log(JSON.stringify(error, null, 2));
+                        process.exit(1);
+                    }
+                }
+                    
+                if(currentBranch !== null && currentBranch !==undefined){
+                    if(currentBranch === ''){
+                        const error = {
+                            "error": "MISSING_BRANCH_NAME",
+                            "message": "Error : The current branch name environment variable cannot be empty."
+                        };
+                        console.log(JSON.stringify(error, null, 2));
+                        process.exit(1);
+                    }
+                }
                 let payload = {
                     downloadURL: url.substring(url.search(/.com/)+5, url.search(/.zip/)+4),
                     uploadId: uploadId,
@@ -125,12 +149,14 @@ async function storybook(serve, options) {
                         customViewports: storybookConfig.customViewports
                     },
                     git: {
-                        branch: commit.branch,
-                        commitId: commit.shortHash,
-                        commitAuthor: commit.author.name,
-                        commitMessage: commit.subject,
+                        branch: currentBranch || commit.branch|| '',  
+                        baselineBranch: baseLine || '',
+                        commitId: commit.shortHash, 
+                        commitAuthor: commit.author.name, 
+                        commitMessage: commit.subject, 
                         githubURL: process.env.GITHUB_URL || '',
-                    }
+                    },
+                    buildName: buildName,
                 }
 
                 // Call static render API
