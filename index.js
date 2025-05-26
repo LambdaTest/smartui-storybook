@@ -3,7 +3,7 @@
 const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
-const { validateProjectToken, validateLatestBuild, validateConfig } = require('./commands/utils/validate');
+const { validateProjectToken, validateLatestBuild, validateConfig, validateTunnel } = require('./commands/utils/validate');
 const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
@@ -12,7 +12,7 @@ program
     .name('smartui')
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
     .version('v' + version)
-    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage']));
+    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage', 'dev']));
 
 const configCommand = program.command('config')
     .description('Manage LambdaTest SmartUI config')
@@ -51,9 +51,13 @@ program.command('storybook')
             process.exit(1);
         }
         if (options.config) {
+            options.tunnel = validateTunnel(options.config);
+            console.log(`[smartui] Tunnel Config : ${JSON.stringify(options.tunnel, null, 2)}`);
+        }
+        if (options.config) {
             options.config = validateConfig(options.config);
         }
-
+        
         await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
         storybook(serve, options);

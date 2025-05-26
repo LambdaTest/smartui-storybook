@@ -149,6 +149,25 @@ function validateConfig(configFile) {
     return storybookConfig
 }
 
+function validateTunnel(configFile) {
+    // Verify config file exists
+    if (!fs.existsSync(configFile)) {
+        console.log(`[smartui] Error: Config file ${configFile} not found.`);
+        process.exit(constants.ERROR_CATCHALL);
+    }
+
+    let tunnelConfig;
+    try {
+        let config = JSON.parse(fs.readFileSync(configFile));
+        tunnelConfig = config.tunnel || {};
+    } catch (error) {
+        console.log('[smartui] Error: ', error.message);
+        process.exit(constants.ERROR_CATCHALL);
+    }
+
+    return tunnelConfig
+}
+
 function validateConfigBrowsers(browsers) {
     if (browsers.length == 0) {
         throw new ValidationError('empty browsers list.');
@@ -248,5 +267,6 @@ module.exports = {
     validateConfig,
     validateConfigBrowsers,
     validateConfigResolutions,
-    validateCustomViewPorts
+    validateCustomViewPorts,
+    validateTunnel,
 };
