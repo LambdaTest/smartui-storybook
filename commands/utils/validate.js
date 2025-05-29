@@ -160,6 +160,9 @@ function validateTunnel(configFile) {
     try {
         let config = JSON.parse(fs.readFileSync(configFile));
         tunnelConfig = config.tunnel || {};
+        if (tunnelConfig &&  tunnelConfig.type != "manual")  {
+            throw new ValidationError('Invalid tunnel type. Accepted type is `manual` only');
+        }
     } catch (error) {
         console.log('[smartui] Error: ', error.message);
         process.exit(constants.ERROR_CATCHALL);
