@@ -3,7 +3,7 @@
 const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
-const { validateProjectToken, validateLatestBuild, validateConfig } = require('./commands/utils/validate');
+const { validateProjectToken, validateLatestBuild, validateConfig, validateTunnel } = require('./commands/utils/validate');
 const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
@@ -49,6 +49,9 @@ program.command('storybook')
             };
             console.log(JSON.stringify(error, null, 2));
             process.exit(1);
+        }
+        if (options.config) {
+            options.tunnel = validateTunnel(options.config);
         }
         if (options.config) {
             options.config = validateConfig(options.config);

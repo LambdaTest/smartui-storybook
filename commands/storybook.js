@@ -157,11 +157,17 @@ async function storybook(serve, options) {
                         githubURL: process.env.GITHUB_URL || '',
                     },
                     buildName: buildName,
+                    tunnel: options.tunnel || {},
                 }
 
                 // Call static render API
                 await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
                     .then(async function (response) {
+                        if (response.data && response.data.error) {
+                            console.log('[smartui] Error: ', response.data.error.message);
+                            process.exitCode = constants.ERROR_CATCHALL;
+                            return
+                        }
                         console.log('[smartui] Build URL: ', response.data.data.buildURL);
                         console.log('[smartui] Build in progress...');
                         await shortPolling(response.data.data.buildId, 0, options);
