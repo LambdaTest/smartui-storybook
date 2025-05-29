@@ -12,7 +12,7 @@ program
     .name('smartui')
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
     .version('v' + version)
-    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage', 'dev']));
+    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage']));
 
 const configCommand = program.command('config')
     .description('Manage LambdaTest SmartUI config')
@@ -52,12 +52,11 @@ program.command('storybook')
         }
         if (options.config) {
             options.tunnel = validateTunnel(options.config);
-            console.log(`[smartui] Tunnel Config : ${JSON.stringify(options.tunnel, null, 2)}`);
         }
         if (options.config) {
             options.config = validateConfig(options.config);
         }
-        
+
         await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
         storybook(serve, options);

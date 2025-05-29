@@ -160,8 +160,6 @@ async function storybook(serve, options) {
                     tunnel: options.tunnel || {},
                 }
 
-                console.log('[smartui] Payload: ', JSON.stringify(payload, null, 2));
-                console.log('URL : ', new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href);
                 // Call static render API
                 await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
                     .then(async function (response) {
