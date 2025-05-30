@@ -160,7 +160,7 @@ function validateTunnel(configFile) {
     try {
         let config = JSON.parse(fs.readFileSync(configFile));
         tunnelConfig = config.tunnel || {};
-        if (tunnelConfig &&  tunnelConfig.type != "manual")  {
+        if (tunnelConfig && tunnelConfig.type && tunnelConfig.type != "manual")  {
             throw new ValidationError('Invalid tunnel type. Accepted type is `manual` only');
         }
     } catch (error) {
