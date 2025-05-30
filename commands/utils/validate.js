@@ -140,13 +140,35 @@ function validateConfig(configFile) {
     // Sanity check waitForTimeout
     if (!Object.hasOwn(storybookConfig, 'waitForTimeout')) {
         storybookConfig.waitForTimeout = 0;
-    } else if (storybookConfig.waitForTimeout <= 0 || storybookConfig.waitForTimeout > 30000) {
-        console.log('[smartui] Warning: Invalid config, value of waitForTimeout must be > 0 and <= 30000');
+    } else if (storybookConfig.waitForTimeout <= 0 || storybookConfig.waitForTimeout > 300000) {
+        console.log('[smartui] Warning: Invalid config, value of waitForTimeout must be > 0 and <= 300000');
         console.log('[smartui] If you do not wish to include waitForTimeout parameter, remove it from the config file.');
         storybookConfig.waitForTimeout = 0;
     }
 
     return storybookConfig
+}
+
+function validateTunnel(configFile) {
+    // Verify config file exists
+    if (!fs.existsSync(configFile)) {
+        console.log(`[smartui] Error: Config file ${configFile} not found.`);
+        process.exit(constants.ERROR_CATCHALL);
+    }
+
+    let tunnelConfig;
+    try {
+        let config = JSON.parse(fs.readFileSync(configFile));
+        tunnelConfig = config.tunnel || {};
+        if (tunnelConfig &&  tunnelConfig.type != "manual")  {
+            throw new ValidationError('Invalid tunnel type. Accepted type is `manual` only');
+        }
+    } catch (error) {
+        console.log('[smartui] Error: ', error.message);
+        process.exit(constants.ERROR_CATCHALL);
+    }
+
+    return tunnelConfig
 }
 
 function validateConfigBrowsers(browsers) {
@@ -248,5 +270,6 @@ module.exports = {
     validateConfig,
     validateConfigBrowsers,
     validateConfigResolutions,
-    validateCustomViewPorts
+    validateCustomViewPorts,
+    validateTunnel,
 };
