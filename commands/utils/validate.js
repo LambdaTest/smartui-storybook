@@ -128,10 +128,19 @@ function validateConfig(configFile) {
 
     try {
         validateConfigBrowsers(storybookConfig.browsers);
-        resolutions = storybookConfig.resolutions || storybookConfig.viewports
-        storybookConfig.resolutions = validateConfigResolutions(resolutions);
+        let resolutions = storybookConfig.resolutions || storybookConfig.viewports
+        if (resolutions) {
+            storybookConfig.resolutions = validateConfigResolutions(resolutions);
+        }
         storybookConfig.viewports = storybookConfig.resolutions;
-        validateCustomViewPorts(storybookConfig.customViewports)
+        let customViewports = storybookConfig.customViewports;
+        if (customViewports && customViewports.length > 0) {
+            validateCustomViewPorts(storybookConfig.customViewports)
+        }
+        if (!resolutions && (!customViewports || customViewports.length === 0)) {
+            console.log('[smartui] Error: No resolutions or customViewports found in config file');
+            process.exit(constants.ERROR_CATCHALL);
+        }
     } catch (error) {
         console.log(`[smartui] Error: Invalid config, ${error.message}`);
         process.exit(constants.ERROR_CATCHALL);
@@ -228,8 +237,8 @@ function validateCustomViewPorts(customViewports) {
         return
     }
     customViewports.forEach(element => {
-        if (!Array.isArray(element.stories) || element.stories == 0) {
-            throw new ValidationError('Missing `stories` in customViewports config. please check the config file');
+        if (element.stories && element.stories.length !== 0 && element.exclude && element.exclude.length !== 0) {
+            throw new ValidationError('Cannot specify both stories and excludeStories in customViewports');
         }
         if (element.styles) {
             if (!element.styles?.width) {
