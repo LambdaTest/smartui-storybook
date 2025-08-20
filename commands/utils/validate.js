@@ -255,7 +255,7 @@ function validateCustomViewPorts(customViewports) {
             if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
                 throw new ValidationError(`customViewports.styles width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
             }
-            if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+            if (height && (height < MIN_RESOLUTION_HEIGHT || height > MIN_RESOLUTION_HEIGHT)) {
                 throw new ValidationError(`customViewports.styles height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
             }
             element.styles.width = width;
