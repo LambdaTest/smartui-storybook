@@ -45,7 +45,7 @@ async function storybook(serve, options) {
                     process.exit(constants.ERROR_CATCHALL);
                 }
                 console.log('[smartui] Stories found: ', Object.keys(stories).length);
-                console.log('[smartui] Number of stories rendered may defer based on the config file.');
+                console.log('[smartui] Number of stories rendered may differ based on the config file.');
 
                 // Capture DoM of every story and send it to renderer API
                 await sendDoM(url, stories, storybookConfig, options);
