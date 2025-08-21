@@ -219,7 +219,7 @@ function validateConfigResolutions(resolutions) {
         if (width && width < MIN_RESOLUTION_WIDTH || width > MAX_RESOLUTION_WIDTH) {
             throw new ValidationError(`width must be > ${MIN_RESOLUTION_WIDTH}, < ${MAX_RESOLUTION_WIDTH}`);
         }
-        if (height & (height < MIN_RESOLUTION_WIDTH || height > MAX_RESOLUTION_WIDTH)) {
+        if (height && (height < MIN_RESOLUTION_HEIGHT|| height > MAX_RESOLUTION_HEIGHT)) {
             throw new ValidationError(`height must be > ${MIN_RESOLUTION_HEIGHT}, < ${MAX_RESOLUTION_HEIGHT}`);
         }
         res.push([width, height || 0]);
