@@ -72,6 +72,7 @@ function filterStories(dirPath, storybookConfig) {
 		process.exit(constants.ERROR_CATCHALL);
 	}
 	console.log('[smartui] Stories found: ', storyIds.length);
+	console.log('[smartui] Number of stories rendered may differ based on the config file.');
 
 	return storyIds
 }
