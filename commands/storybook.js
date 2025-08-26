@@ -163,7 +163,7 @@ async function storybook(serve, options) {
                 }
 
                 // Call static render API
-                await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
+                await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload, {timeout: 75000})
                     .then(async function (response) {
                         if (response.data && response.data.error) {
                             console.log('[smartui] Error: ', response.data.error.message);
