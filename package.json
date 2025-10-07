@@ -1,6 +1,6 @@
 {
   "name": "@lambdatest/smartui-storybook",
-  "version": "1.1.25",
+  "version": "1.1.26",
   "description": "LambdaTest's command-line interface (CLI) aimed to help you run your SmartUI tests on LambdaTest platform",
   "main": "index.js",
   "repository": {
