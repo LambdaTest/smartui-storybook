@@ -66,6 +66,7 @@ async function storybook(serve, options) {
 
         // Get storyIds to be rendered 
         let storyIds = static.filterStories(dirPath, storybookConfig)
+        let maxStories = storybookConfig.chunkSize || 100;
 
         // Upload Storybook static
         await static.getSignedUrl(options)
@@ -160,6 +161,7 @@ async function storybook(serve, options) {
                     },
                     buildName: buildName,
                     tunnel: options.tunnel || {},
+                    maxStories: maxStories
                 }
 
                 // Call static render API
