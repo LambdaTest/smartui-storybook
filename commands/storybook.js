@@ -71,6 +71,12 @@ async function storybook(serve, options) {
         if (Array.isArray(storybookConfig.lazyLoadedStories) && storybookConfig.lazyLoadedStories.length > 0) {
             lazyLoadedStories = storybookConfig.lazyLoadedStories;
         }
+        let useGlobals = false;
+        let backgroundTheme = storybookConfig.backgroundTheme || 'light';
+        if (storybookConfig.backgroundTheme && ['light', 'dark'].includes(storybookConfig.backgroundTheme.toLowerCase())) {
+            useGlobals = true;
+            backgroundTheme = storybookConfig.backgroundTheme.toLowerCase();
+        }
 
         // Upload Storybook static
         await static.getSignedUrl(options)
@@ -154,7 +160,9 @@ async function storybook(serve, options) {
                         waitForTimeout: storybookConfig.waitForTimeout,
                         customViewports: storybookConfig.customViewports,
                         useOnlyCustomViewports: storybookConfig.useOnlyCustomViewports,
-                        lazyLoadedStories: lazyLoadedStories
+                        lazyLoadedStories: lazyLoadedStories,
+                        useGlobals: useGlobals,
+                        backgroundTheme: backgroundTheme
                     },
                     git: {
                         branch: currentBranch || commit.branch|| '',  
