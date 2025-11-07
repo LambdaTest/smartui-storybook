@@ -83,8 +83,6 @@ async function storybook(serve, options) {
             backgroundTheme = 'light';
         }
 
-        console.log(`useGlobals: ${useGlobals}, backgroundTheme: ${backgroundTheme}`);
-
         // Upload Storybook static
         await static.getSignedUrl(options)
             .then(async function (response) {
