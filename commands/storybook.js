@@ -78,6 +78,11 @@ async function storybook(serve, options) {
             backgroundTheme = storybookConfig.backgroundTheme.toLowerCase();
         }
 
+        if (storybookConfig.useGlobals === true || storybookConfig.backgroundTheme == undefined) {
+            useGlobals = true;
+            backgroundTheme = 'light';
+        }
+
         // Upload Storybook static
         await static.getSignedUrl(options)
             .then(async function (response) {
