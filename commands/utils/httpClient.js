@@ -7,7 +7,6 @@ let proxyUrl = null;
 try {
     const SMARTUI_API_PROXY = process.env.SMARTUI_API_PROXY;
     if (SMARTUI_API_PROXY) {
-        // Handle URL with or without protocol
         const urlStr = SMARTUI_API_PROXY.startsWith('http') ?
             SMARTUI_API_PROXY : `http://${SMARTUI_API_PROXY}`;
         proxyUrl = new URL(urlStr);
@@ -16,7 +15,6 @@ try {
     console.error('[smartui] Invalid proxy URL:', error.message);
 }
 
-// Build axios configuration
 const axiosConfig = {
     proxy: proxyUrl ? {
         host: proxyUrl.hostname,
