@@ -1,4 +1,4 @@
-const { default: axios } = require('axios')
+const { httpClient } = require('./utils/httpClient')
 const fs = require('fs')
 const { sendDoM } = require('./utils/dom')
 const { validateStorybookUrl, validateStorybookDir } = require('./utils/validate')
@@ -27,7 +27,7 @@ async function storybook(serve, options) {
         storybookConfig.browsers = (!storybookConfig.browsers.length) ? 'all' : storybookConfig.browsers.map(x => x.toLowerCase()).toString();
 
         // Get stories object from stories.json and add url corresponding to every story ID 
-        await axios.get(new URL('stories.json', url).href)
+        await httpClient.get(new URL('stories.json', url).href)
             .then(async function (response) {
                 let stories = {}
                 for (const [storyId, storyInfo] of Object.entries(response.data.stories)) {
@@ -101,7 +101,7 @@ async function storybook(serve, options) {
                 // Upload to S3
                 const zipData = fs.readFileSync('storybook-static.zip');
                 console.log('[smartui] Upload in progress...')
-                await axios.put(url, zipData, {
+                await httpClient.put(url, zipData, {
                     headers: {
                         'Content-Type': 'application/zip',
                         'Content-Length': zipData.length
@@ -183,7 +183,7 @@ async function storybook(serve, options) {
                 }
 
                 // Call static render API
-                await axios.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
+                await httpClient.post(new URL(constants[options.env].STATIC_RENDER_PATH, constants[options.env].BASE_URL).href, payload)
                     .then(async function (response) {
                         if (response.data && response.data.error) {
                             console.log('[smartui] Error: ', response.data.error.message);
