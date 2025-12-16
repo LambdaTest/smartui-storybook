@@ -1,5 +1,5 @@
 const fs = require('fs');
-const axios = require('axios');
+const { httpClient } = require('./httpClient');
 const archiver = require('archiver');
 var { constants } = require('./constants');
 const { skipStory } = require('./story');
@@ -9,7 +9,7 @@ var INTERVAL = 2000
 const MAX_INTERVAL = 512000
 
 function getSignedUrl(options) {
-    return axios.get(new URL(constants[options.env].GET_SIGNED_URL_PATH, constants[options.env].BASE_URL).href, {
+    return httpClient.get(new URL(constants[options.env].GET_SIGNED_URL_PATH, constants[options.env].BASE_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         }});

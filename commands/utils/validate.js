@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { httpClient } = require('./httpClient');
 var { constants } = require('./constants');
 const fs = require('fs');
 const { getLastCommit } = require('./git');
@@ -18,7 +18,7 @@ class ValidationError extends Error {
 
 function validateProjectToken(options) {
     if (process.env.PROJECT_TOKEN) {
-        return axios.get(constants[options.env].AUTH_URL, {
+        return httpClient.get(constants[options.env].AUTH_URL, {
             headers: {
                 projectToken: process.env.PROJECT_TOKEN
             }
@@ -51,7 +51,7 @@ function validateStorybookUrl(url) {
         console.log('[smartui] Error: ', error.message)
         process.exit(constants.ERROR_CATCHALL);
     }
-    return axios.get(aboutUrl)
+    return httpClient.get(aboutUrl)
         .then(function (response) {
             console.log('[smartui] Connection to storybook established');
         })
@@ -87,7 +87,7 @@ async function validateStorybookDir(dir) {
 
 async function validateLatestBuild(options) {
     let commit = await getLastCommit();
-    return axios.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
+    return httpClient.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         },

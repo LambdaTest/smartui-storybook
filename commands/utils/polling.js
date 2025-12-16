@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { httpClient } = require('./httpClient');
 const Table = require('cli-table3');
 var { constants } = require('./constants');
 
@@ -10,7 +10,7 @@ var CURRENT_TIME = 0
 var FLAG = 0
 
 async function shortPolling(buildId, retries = 0, options) {
-    await axios.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
+    await httpClient.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         }})
