@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { httpClient } = require('./httpClient');
 const fs = require('fs');
 const path = require('path')
 const formData = require('form-data');
@@ -73,7 +73,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     }
 
     // Send DOM to render API
-    await axios.post(constants[options.env].RENDER_API_URL, form, {
+    await httpClient.post(constants[options.env].RENDER_API_URL, form, {
         headers: {
             ...form.getHeaders()
         }
@@ -99,7 +99,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
 };
 
 function getBase64(url) {
-    return axios.get(url, {
+    return httpClient.get(url, {
             responseType: "text",
             responseEncoding: "base64",
         })

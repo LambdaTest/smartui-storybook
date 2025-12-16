@@ -1,9 +1,9 @@
-const axios = require('axios');
 var { constants } = require('./constants');
+const { httpClient } = require('./httpClient');
 
 // Check for package updates
 function checkUpdate(version, options) {
-    return axios.get(new URL(constants[options.env].CHECK_UPDATE_PATH, constants[options.env].BASE_URL).href, {
+    return httpClient.get(new URL(constants[options.env].CHECK_UPDATE_PATH, constants[options.env].BASE_URL).href, {
         params: {
             packageName: 'smartui-storybook',
             packageVersion: version
