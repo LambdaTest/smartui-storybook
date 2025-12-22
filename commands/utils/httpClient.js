@@ -21,21 +21,12 @@ const skipCertificates = process.env.SMARTUI_API_SKIP_CERTIFICATES === 'true';
 const axiosConfig = {};
 
 if (proxyUrl) {
-    let proxyUrlString = `${proxyUrl.protocol}//`;
-    if (proxyUrl.username && proxyUrl.password) {
-        proxyUrlString += `${encodeURIComponent(proxyUrl.username)}:${encodeURIComponent(proxyUrl.password)}@`;
-    }
-    proxyUrlString += proxyUrl.hostname;
-    if (proxyUrl.port) {
-        proxyUrlString += `:${proxyUrl.port}`;
-    } else {
-        proxyUrlString += proxyUrl.protocol === 'https:' ? ':443' : ':80';
-    }
-
-    axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrlString, {
+    const agentOptions = {
         rejectUnauthorized: !skipCertificates
-    });
-    axiosConfig.httpAgent = new HttpProxyAgent(proxyUrlString);
+    };
+
+    axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrl, agentOptions);
+    axiosConfig.httpAgent = new HttpProxyAgent(proxyUrl,agentOptions);
 } else if (skipCertificates) {
     axiosConfig.httpsAgent = new https.Agent({
         rejectUnauthorized: false
