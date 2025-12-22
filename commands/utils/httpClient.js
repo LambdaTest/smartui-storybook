@@ -1,9 +1,10 @@
 const axios = require('axios');
 const https = require('https');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const { HttpProxyAgent } = require('http-proxy-agent');
 
 let proxyUrl = null;
 
-// Handle proxy URL configuration
 try {
     const SMARTUI_API_PROXY = process.env.SMARTUI_API_PROXY;
     if (SMARTUI_API_PROXY) {
@@ -15,21 +16,27 @@ try {
     console.error('[smartui] Invalid proxy URL:', error.message);
 }
 
-const axiosConfig = {
-    proxy: proxyUrl ? {
-        host: proxyUrl.hostname,
-        port: proxyUrl.port ? Number(proxyUrl.port) : 80,
-        ...(proxyUrl.username && proxyUrl.password ? {
-            auth: {
-                username: proxyUrl.username,
-                password: proxyUrl.password
-            }
-        } : {})
-    } : false
-};
+const skipCertificates = process.env.SMARTUI_API_SKIP_CERTIFICATES === 'true';
 
-// Handle certificate verification skip
-if (process.env.SMARTUI_API_SKIP_CERTIFICATES) {
+const axiosConfig = {};
+
+if (proxyUrl) {
+    let proxyUrlString = `${proxyUrl.protocol}//`;
+    if (proxyUrl.username && proxyUrl.password) {
+        proxyUrlString += `${encodeURIComponent(proxyUrl.username)}:${encodeURIComponent(proxyUrl.password)}@`;
+    }
+    proxyUrlString += proxyUrl.hostname;
+    if (proxyUrl.port) {
+        proxyUrlString += `:${proxyUrl.port}`;
+    } else {
+        proxyUrlString += proxyUrl.protocol === 'https:' ? ':443' : ':80';
+    }
+
+    axiosConfig.httpsAgent = new HttpsProxyAgent(proxyUrlString, {
+        rejectUnauthorized: !skipCertificates
+    });
+    axiosConfig.httpAgent = new HttpProxyAgent(proxyUrlString);
+} else if (skipCertificates) {
     axiosConfig.httpsAgent = new https.Agent({
         rejectUnauthorized: false
     });
