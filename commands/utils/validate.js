@@ -30,9 +30,11 @@ function validateProjectToken(options) {
                 if (error.response) {
                     console.log('[smartui] Error: Invalid Project Token');
                 } else if (error.request) {
-                    console.log('[smartui] Project Token not validated. Error: ', error.message);
+                    const errorMsg = error.code ? `${error.code}${error.message ? ' - ' + error.message : ''}` : (error.message || 'Unknown error');
+                    console.log('[smartui] Project Token not validated. Error: ', errorMsg);
                 } else {
-                    console.log('[smartui] Project Token not validated. Error: ', error.message);
+                    const errorMsg = error.code ? `${error.code}${error.message ? ' - ' + error.message : ''}` : (error.message || 'Unknown error');
+                    console.log('[smartui] Project Token not validated. Error: ', errorMsg);
                 }
                 process.exit(constants.ERROR_CATCHALL);
             });
