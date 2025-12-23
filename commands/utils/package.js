@@ -18,8 +18,10 @@ function checkUpdate(version, options) {
         .catch(function (error) {
             if (error.response && error.response.data && error.response.data.error) {
                 console.log('Cannot check for updates. Error: ' + error.response.data.error.message);
+            } else if (error.code) {
+                console.log('Cannot check for updates. Error: ' + error.code + (error.message ? ' - ' + error.message : ''));
             } else {
-                console.log('Cannot check for updates. Error: ' + error.message);   
+                console.log('Cannot check for updates. Error: ' + (error.message || JSON.stringify(error)));   
             }
         });
 };
