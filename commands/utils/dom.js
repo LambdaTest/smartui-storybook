@@ -6,10 +6,13 @@ const { JSDOM } = require("jsdom");
 var { constants } = require('./constants');
 const { getLastCommit } = require('./git');
 const { shortPolling } = require('./polling');
+const puppeteer = require('puppeteer');
 
 async function sendDoM(storybookUrl, stories, storybookConfig, options) {
-    const createBrowser = require('browserless')
-    const browser = createBrowser()
+    const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
 
     if (!fs.existsSync('doms')){
         fs.mkdir('doms', (err) => {
@@ -20,8 +23,9 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
         });
     }
     for (const [storyId, storyInfo] of Object.entries(stories)) {
-        const browserless = await browser.createContext()
-        const html = await browserless.html(storyInfo.url)
+        const page = await browser.newPage();
+        await page.goto(storyInfo.url, { waitUntil: 'networkidle0' });
+        const html = await page.content();
 
         dom = new JSDOM(html, {
             url: storybookUrl,
@@ -45,7 +49,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
             console.error(err);
         }
 
-        await browserless.destroyContext()
+        await page.close();
     }
     await browser.close()
 
