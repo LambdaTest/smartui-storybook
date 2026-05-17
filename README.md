@@ -17,10 +17,10 @@ With TestMu AI (Formerly LambdaTest), you can run SmartUI visual regression test
 
 ### Prerequisites
 
-1. Basic understanding of [Storybook](https://storybook.js.org/docs/react/get-started/introduction).
-2. Node.js version higher than `14.15.0`. See [Node.js releases](https://nodejs.org/en/download/releases/).
-3. Storybook version higher than `6.4.0`. See [Storybook releases](https://github.com/storybookjs/storybook/releases).
-4. A TestMu AI account — [sign up here](https://www.testmuai.com/register/) and log into [TestMu AI SmartUI](https://smartui.lambdatest.com/).
+1. Basic understanding of Storybook.
+2. Node.js version higher than `14.15.0`. See Node.js releases.
+3. Storybook version higher than `6.4.0`. See Storybook releases.
+4. A TestMu AI account — sign up here and log into TestMu AI SmartUI.
 
 ### Setup
 
@@ -47,7 +47,7 @@ module.exports = {
 };
 ```
 
-Create a SmartUI project at the [Projects page](https://smartui.lambdatest.com/), then set your project token:
+Create a SmartUI project at the Projects page, then set your project token:
 
 - For Linux/macOS:
 
