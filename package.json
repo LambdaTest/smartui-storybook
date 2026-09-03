@@ -1,7 +1,7 @@
 {
   "name": "@lambdatest/smartui-storybook",
-  "version": "1.1.32",
-  "description": "LambdaTest's command-line interface (CLI) aimed to help you run your SmartUI tests on LambdaTest platform",
+  "version": "1.1.33",
+  "description": "Visual regression testing for Storybook with SmartUI by TestMu AI (Formerly LambdaTest). Snapshot your stories and compare them across real browsers and operating systems.",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -15,9 +15,32 @@
     "smartui": "./index.js"
   },
   "keywords": [
+    "storybook-addon",
+    "storybook",
+    "addon",
+    "test",
+    "visual-testing",
+    "visual-regression",
+    "screenshot-testing",
+    "cross-browser",
+    "testmuai",
     "lambdatest",
     "smartui"
   ],
+  "storybook": {
+    "displayName": "SmartUI",
+    "icon": "https://avatars.githubusercontent.com/u/27130435",
+    "supportedFrameworks": [
+      "react",
+      "vue",
+      "angular",
+      "web-components",
+      "html",
+      "svelte",
+      "preact",
+      "ember"
+    ]
+  },
   "bugs": {
     "url": "https://github.com/LambdaTest/smartui-storybook/issues"
   },
