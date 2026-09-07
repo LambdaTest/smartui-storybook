@@ -70,6 +70,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     form.append('commitId', commit.shortHash);
     form.append('commitAuthor', commit.author.name);
     form.append('commitMessage', commit.subject);
+    if (storybookConfig.tags && storybookConfig.tags.length) form.append('tags', storybookConfig.tags.join(','));
     form.append('customViewports', JSON.stringify(storybookConfig.customViewports));
     githubURL = process.env.GITHUB_URL
     if (githubURL) {
