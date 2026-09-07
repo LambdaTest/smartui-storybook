@@ -85,6 +85,7 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
         })
         .then(async function (response) {
             console.log('[smartui] Build URL: ', response.data.buildURL);
+            (response.data.warnings || []).forEach(w => console.log('[smartui] Warning: ', w));
             console.log('[smartui] Build in progress...');
             await shortPolling(response.data.buildId, 0, options);
         })

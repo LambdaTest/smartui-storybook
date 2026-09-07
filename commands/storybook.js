@@ -192,6 +192,7 @@ async function storybook(serve, options) {
                             return
                         }
                         console.log('[smartui] Build URL: ', response.data.data.buildURL);
+                        (response.data.warnings || []).forEach(w => console.log('[smartui] Warning: ', w));
                         console.log('[smartui] Build in progress...');
                         await shortPolling(response.data.data.buildId, 0, options);
                     })
