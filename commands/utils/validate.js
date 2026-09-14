@@ -157,6 +157,21 @@ function validateConfig(configFile) {
         storybookConfig.waitForTimeout = 0;
     }
 
+    // Same limits the SmartUI dashboard enforces on project tags: 50 tags, 50 characters each
+    if (Object.hasOwn(storybookConfig, 'tags')) {
+        const tags = storybookConfig.tags;
+        const valid = Array.isArray(tags) && tags.every(t => typeof t === 'string' && t.trim().length > 0 && [...t.trim()].length <= 50);
+        if (!valid) {
+            console.log('[smartui] Error: Invalid config, tags must be an array of non-empty strings of at most 50 characters');
+            process.exit(constants.ERROR_CATCHALL);
+        }
+        if (tags.length > 50) {
+            console.log('[smartui] Error: Invalid config, at most 50 tags are allowed');
+            process.exit(constants.ERROR_CATCHALL);
+        }
+        storybookConfig.tags = tags.map(t => t.trim());
+    }
+
     return storybookConfig
 }
 

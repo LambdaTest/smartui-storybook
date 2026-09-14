@@ -179,7 +179,8 @@ async function storybook(serve, options) {
                     },
                     buildName: buildName,
                     tunnel: options.tunnel || {},
-                    maxStories: maxStories
+                    maxStories: maxStories,
+                    tags: storybookConfig.tags || []
                 }
 
                 // Call static render API
