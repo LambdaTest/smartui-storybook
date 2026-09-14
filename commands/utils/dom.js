@@ -70,7 +70,8 @@ async function sendDoM(storybookUrl, stories, storybookConfig, options) {
     form.append('commitId', commit.shortHash);
     form.append('commitAuthor', commit.author.name);
     form.append('commitMessage', commit.subject);
-    if (storybookConfig.tags && storybookConfig.tags.length) form.append('tags', storybookConfig.tags.join(','));
+    // one field per tag so a comma inside a tag name is not split server-side
+    for (const tag of storybookConfig.tags || []) form.append('tags', tag);
     form.append('customViewports', JSON.stringify(storybookConfig.customViewports));
     githubURL = process.env.GITHUB_URL
     if (githubURL) {
