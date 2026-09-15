@@ -125,7 +125,16 @@ You can now execute your `StoryBook` components for `Visual Regression Testing` 
 smartui storybook http://localhost:6006 --config .smartui.json
 ```
 
-You can also provide path to the storybook-static directory instead of the local Storybook URL. Use `--help` for more information on usage.
+When given a URL, the CLI captures the running Storybook (its story index, `iframe.html` and every file the stories load) into a temporary static copy and uploads that, exactly as it would a `storybook-static` directory. The URL can be a Storybook dev server started with `npm run storybook` (webpack builder) or any served static build.
+
+Storybook projects on the Vite builder cannot be captured from the dev server, because Vite serves modules in a form a static file server cannot replay. Build first and pass the output directory instead:
+
+```bash
+npx storybook build
+smartui storybook ./storybook-static --config .smartui.json
+```
+
+You can always provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
 ## Documentation & Resources :books:
       
