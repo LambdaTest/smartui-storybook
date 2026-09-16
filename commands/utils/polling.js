@@ -9,8 +9,15 @@ const MAX_INTERVAL = 1800000; // 30 minutes in milliseconds
 var CURRENT_TIME = 0
 var FLAG = 0
 
-async function shortPolling(buildId, retries = 0, options) {
-    await httpClient.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
+function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+}
+
+// Resolves once the build reaches a terminal state (completed, polling window exhausted,
+// or status lookups kept failing). With `pollingOptions.stopOnError` a build in `error`
+// status is terminal too; callers that keep a tunnel open for the build rely on this.
+async function shortPolling(buildId, retries = 0, options, pollingOptions = {}) {
+    return httpClient.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         }})
@@ -55,6 +62,11 @@ async function shortPolling(buildId, retries = 0, options) {
                         }
                     }
                     return;
+                } else if (pollingOptions.stopOnError && response.data.buildStatus === 'error') {
+                    console.log('[smartui] Build failed. Build URL: ', response.data.buildURL);
+                    console.log('[smartui] Please check the build on LambdaTest SmartUI for details.');
+                    process.exitCode = constants.ERROR_CATCHALL;
+                    return;
                 } else {
                     if (response.data.screenshots && response.data.screenshots.length > 0) {
                         // TODO: show Screenshots processed current/total
@@ -77,9 +89,9 @@ async function shortPolling(buildId, retries = 0, options) {
                 INTERVAL = FIXED_INTERVAL; // Switch to fixed interval after reaching 256 seconds
             }
 
-            setTimeout(function () {
-                shortPolling(buildId, 0, options)
-            }, INTERVAL);
+            return delay(INTERVAL).then(function () {
+                return shortPolling(buildId, 0, options, pollingOptions);
+            });
         })
         .catch(function (error) {
             if (retries >= 3) {
@@ -88,9 +100,9 @@ async function shortPolling(buildId, retries = 0, options) {
                 return;
             }
 
-            setTimeout(function () {
-                shortPolling(buildId, retries+1, options);
-            }, 2000);
+            return delay(2000).then(function () {
+                return shortPolling(buildId, retries+1, options, pollingOptions);
+            });
         });
 };
 

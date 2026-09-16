@@ -3,7 +3,7 @@
 const { Command, Option } = require('commander');
 const program = new Command();
 const { storybook } = require('./commands/storybook');
-const { validateProjectToken, validateLatestBuild, validateConfig, validateTunnel } = require('./commands/utils/validate');
+const { validateProjectToken, validateLatestBuild, validateConfig, validateTunnel, resolveTunnelCredentials, isStorybookUrl } = require('./commands/utils/validate');
 const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
@@ -35,6 +35,8 @@ program.command('storybook')
     .option('-c --config <file>', 'Config file path')
     .option('--force-rebuild', 'Force a rebuild of an already existing build.', false)
     .option('--buildName <string>', 'Specify the build name for the pipeline')
+    .option('--userName <string>', 'LambdaTest username, used to start the tunnel for a Storybook URL. Defaults to LT_USERNAME')
+    .option('--accessKey <string>', 'LambdaTest access key, used to start the tunnel for a Storybook URL. Defaults to LT_ACCESS_KEY')
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         
@@ -50,6 +52,10 @@ program.command('storybook')
             console.log(JSON.stringify(error, null, 2));
             process.exit(1);
         }
+        // A Storybook URL is rendered through a LambdaTest tunnel, which needs credentials.
+        if (isStorybookUrl(serve)) {
+            options.ltCredentials = resolveTunnelCredentials(options);
+        }
         if (options.config) {
             options.tunnel = validateTunnel(options.config);
         }
@@ -59,7 +65,7 @@ program.command('storybook')
 
         await validateProjectToken(options);
         if (!options.forceRebuild) await validateLatestBuild(options);
-        storybook(serve, options);
+        await storybook(serve, options);
     });
 
 program.parse();
