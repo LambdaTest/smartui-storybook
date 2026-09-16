@@ -139,7 +139,7 @@ export LT_ACCESS_KEY="<your access key>"
 smartui storybook http://localhost:6006 --config .smartui.json
 ```
 
-Keep the CLI running until it reports the build result: the tunnel is closed when the process exits. A Storybook served on `localhost` is rendered on Chrome, Firefox and Edge; Safari cannot route `localhost` through the tunnel, so use a hostname other than `localhost` (for example a LAN or internal hostname) if Safari screenshots of a local Storybook are needed. If the dev server is still compiling when you run the command, open the Storybook once in a browser first so that the first render does not time out.
+Keep the CLI running until it reports the build result: the tunnel is closed when the process exits. If the dev server is still compiling when you run the command, open the Storybook once in a browser first so that the first render does not time out.
 
 You can always provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
