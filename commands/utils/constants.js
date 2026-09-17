@@ -25,4 +25,8 @@ constants.ERROR_CATCHALL = 1
 constants.ERROR_BUILD_ALREADY_EXISTS = 3
 constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
 
+// A Storybook URL build renders through the tunnel this process keeps open, so the CLI
+// waits for it much longer than for a static build before giving up.
+constants.URL_MODE_MAX_WAIT_MS = 2 * 60 * 60 * 1000
+
 module.exports = { constants };

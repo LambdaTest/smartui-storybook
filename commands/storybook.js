@@ -66,15 +66,18 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
             tunnel: {
                 type: 'auto',
                 tunnelName: tunnel.tunnelName,
+                // The LambdaTest account that owns the tunnel is not necessarily the account
+                // that owns the project token, so the renderer needs these to look the tunnel
+                // up at the tunnel service. They travel only in this request body.
                 user: credentials.user,
                 key: credentials.key,
-                // The renderer builds `${baseURL}/iframe.html`, so the trailing slash the CLI
-                // uses for its own index fetches must not be sent.
                 baseURL: toRenderBaseURL(baseURL)
             },
             maxStories: storybookConfig.chunkSize || 100
         });
-        await requestRender(payload, options, { stopOnError: true });
+        // The tunnel is the data path of the build, so keep it open until the build is over:
+        // wait far longer than for a static build and report loudly if we still give up.
+        await requestRender(payload, options, { stopOnError: true, maxWaitMs: constants.URL_MODE_MAX_WAIT_MS });
     } finally {
         await stopTunnel(tunnel);
     }
@@ -142,9 +145,10 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
         });
 };
 
-// Storybook origin as the renderer expects it: no trailing slash.
+// Storybook origin as the renderer expects it: a directory URL with a trailing slash, so
+// that the renderer's `new URL('iframe.html', baseURL)` keeps a sub-path like `/storybook/`.
 function toRenderBaseURL(baseURL) {
-    return baseURL.replace(/\/+$/, '');
+    return baseURL.endsWith('/') ? baseURL : baseURL + '/';
 }
 
 // The S3 object key of the uploaded zip, sliced out of the presigned upload URL.
@@ -285,7 +289,12 @@ async function requestRender(payload, options, pollingOptions = {}) {
 
         console.log('[smartui] Build URL: ', response.data.data.buildURL);
         console.log('[smartui] Build in progress...');
-        await shortPolling(response.data.data.buildId, 0, options, pollingOptions);
+        const reason = await shortPolling(response.data.data.buildId, 0, options, pollingOptions);
+        if (pollingOptions.stopOnError && (reason === 'timeout' || reason === 'unavailable')) {
+            const waited = Math.round((pollingOptions.maxWaitMs || 0) / 60000);
+            console.log(`[smartui] Error: gave up waiting for the build${reason === 'timeout' ? ` after ${waited} minutes` : ' (build status unavailable)'}. The tunnel is closing now, so any chunk still rendering will fail. Check the build on LambdaTest SmartUI.`);
+            process.exitCode = constants.ERROR_CATCHALL;
+        }
         return;
     }
 }

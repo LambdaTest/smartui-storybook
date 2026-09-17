@@ -1,6 +1,7 @@
 const lambdaTunnel = require('@lambdatest/node-tunnel');
 
 const START_TIMEOUT_MS = 120000;
+const STOP_TIMEOUT_MS = 30000;
 
 let activeHandle = null;
 let cleanupHandlersRegistered = false;
@@ -65,9 +66,14 @@ function registerCleanupHandlers() {
     });
 }
 
-async function startTunnel({ user, key, env }) {
+async function startTunnel({ user, key, env }, TunnelClass = lambdaTunnel) {
     const tunnelName = generateTunnelName();
-    const instance = new lambdaTunnel();
+    const instance = new TunnelClass();
+    const handle = { tunnelName, instance };
+    // Cover the whole startup window: the binary may be spawned (and a signal may arrive) at
+    // any point while start() runs, so the cleanup handlers must already know the handle.
+    activeHandle = handle;
+    registerCleanupHandlers();
     console.log(`[smartui] Starting LambdaTest tunnel ${tunnelName}...`);
     try {
         await withTimeout(
@@ -76,29 +82,35 @@ async function startTunnel({ user, key, env }) {
             `timed out after ${START_TIMEOUT_MS / 1000}s`
         );
     } catch (error) {
-        killTunnelProcessSync({ instance });
+        killTunnelProcessSync(handle);
+        activeHandle = null;
         throw new Error(`LambdaTest tunnel did not start (${errorMessage(error)}). Check --userName/--accessKey (or LT_USERNAME/LT_ACCESS_KEY) and network access to *.lambdatest.com.`);
     }
     if (!instance.isRunning()) {
+        // start() can resolve without a working tunnel (for example after the binary wrote to
+        // stderr) while the child process is still alive: never leave it behind.
+        killTunnelProcessSync(handle);
+        activeHandle = null;
         throw new Error('LambdaTest tunnel did not start. Check --userName/--accessKey (or LT_USERNAME/LT_ACCESS_KEY) and network access to *.lambdatest.com.');
     }
 
-    const handle = { tunnelName, instance };
-    activeHandle = handle;
-    registerCleanupHandlers();
     console.log('[smartui] Tunnel started');
     return handle;
 }
 
 async function stopTunnel(handle) {
     if (!handle || !handle.instance) return;
-    if (activeHandle === handle) activeHandle = null;
     try {
-        await handle.instance.stop();
+        // stop() asks the binary over its local HTTP API with no timeout of its own; a wedged
+        // binary must not keep the CLI alive forever.
+        await withTimeout(handle.instance.stop(), STOP_TIMEOUT_MS, `stop timed out after ${STOP_TIMEOUT_MS / 1000}s`);
         console.log('[smartui] Tunnel stopped');
     } catch (error) {
         console.log(`[smartui] Warning: could not stop tunnel ${handle.tunnelName} cleanly. Error: ${errorMessage(error)}`);
         killTunnelProcessSync(handle);
+    } finally {
+        // Cleared only once the tunnel is gone, so a signal during a slow stop still kills it.
+        if (activeHandle === handle) activeHandle = null;
     }
 }
 

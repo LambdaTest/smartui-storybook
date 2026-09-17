@@ -22,9 +22,10 @@ describe('render payload', () => {
 	afterAll(() => { process.env.PROJECT_TOKEN = savedToken; });
 
 	test.each([
-		['http://localhost:6006/', 'http://localhost:6006'],
-		['http://localhost:6006', 'http://localhost:6006'],
-		['https://host/storybook/', 'https://host/storybook'],
+		['http://localhost:6006/', 'http://localhost:6006/'],
+		['http://localhost:6006', 'http://localhost:6006/'],
+		['https://host/storybook/', 'https://host/storybook/'],
+		['https://host/storybook', 'https://host/storybook/'],
 	])('toRenderBaseURL(%s) -> %s', (input, expected) => {
 		expect(toRenderBaseURL(input)).toBe(expected);
 	});
