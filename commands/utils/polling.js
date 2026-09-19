@@ -5,12 +5,21 @@ var { constants } = require('./constants');
 var INTERVAL = 2000
 const MAX_EXPONENTIAL_INTERVAL = 512000 // 512 seconds (8.5 minutes)
 const FIXED_INTERVAL = 60000 // 1 minute in milliseconds
-const MAX_INTERVAL = 1800000; // 30 minutes in milliseconds
+const MAX_INTERVAL = 1800000; // 30 minutes in milliseconds (default polling window)
 var CURRENT_TIME = 0
 var FLAG = 0
 
-async function shortPolling(buildId, retries = 0, options) {
-    await httpClient.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
+function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+}
+
+// Resolves with the reason polling stopped: 'completed' (build finished), 'error' (build
+// failed, only with `pollingOptions.stopOnError`), 'timeout' (polling window exhausted) or
+// 'unavailable' (status lookups kept failing). `pollingOptions.maxWaitMs` widens the window
+// for callers that keep a tunnel open for the build.
+async function shortPolling(buildId, retries = 0, options, pollingOptions = {}) {
+    const maxInterval = pollingOptions.maxWaitMs || MAX_INTERVAL;
+    return httpClient.get(new URL('?buildId=' + buildId, constants[options.env].BUILD_STATUS_URL).href, {
         headers: {
             projectToken: process.env.PROJECT_TOKEN
         }})
@@ -54,7 +63,12 @@ async function shortPolling(buildId, retries = 0, options) {
                             console.log('No comparisons run. No screenshot in the current build has the corresponding screenshot in baseline build.');
                         }
                     }
-                    return;
+                    return 'completed';
+                } else if (pollingOptions.stopOnError && response.data.buildStatus === 'error') {
+                    console.log('[smartui] Build failed. Build URL: ', response.data.buildURL);
+                    console.log('[smartui] Please check the build on LambdaTest SmartUI for details.');
+                    process.exitCode = constants.ERROR_CATCHALL;
+                    return 'error';
                 } else {
                     if (response.data.screenshots && response.data.screenshots.length > 0) {
                         // TODO: show Screenshots processed current/total
@@ -64,9 +78,9 @@ async function shortPolling(buildId, retries = 0, options) {
             }
 
             CURRENT_TIME = CURRENT_TIME + INTERVAL
-            if (CURRENT_TIME >= MAX_INTERVAL) {
+            if (CURRENT_TIME >= maxInterval) {
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
-                return;
+                return 'timeout';
             }
 
             // Adjust the interval
@@ -77,20 +91,20 @@ async function shortPolling(buildId, retries = 0, options) {
                 INTERVAL = FIXED_INTERVAL; // Switch to fixed interval after reaching 256 seconds
             }
 
-            setTimeout(function () {
-                shortPolling(buildId, 0, options)
-            }, INTERVAL);
+            return delay(INTERVAL).then(function () {
+                return shortPolling(buildId, 0, options, pollingOptions);
+            });
         })
         .catch(function (error) {
             if (retries >= 3) {
                 console.log('[smartui] Error: Failed getting build status.', error.message);
                 console.log('[smartui] Please check the build status on LambdaTest SmartUI.');
-                return;
+                return 'unavailable';
             }
 
-            setTimeout(function () {
-                shortPolling(buildId, retries+1, options);
-            }, 2000);
+            return delay(2000).then(function () {
+                return shortPolling(buildId, retries+1, options, pollingOptions);
+            });
         });
 };
 
