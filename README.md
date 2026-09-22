@@ -152,7 +152,43 @@ smartui storybook http://localhost:6006 --config .smartui.json
 
 
 
-You can also provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information.
+When given a URL, the CLI renders the running Storybook directly from that URL. It starts a [TestMu AI tunnel](https://www.lambdatest.com/support/docs/testing-locally-hosted-pages/) so the SmartUI renderer can reach a Storybook on `localhost` or on your internal network, and stops the tunnel once the build finishes. The URL can be a Storybook dev server started with `npm run storybook` (webpack or Vite builder) or any hosted build.
+
+
+
+The tunnel needs your TestMu AI (Formerly LambdaTest) username and access key. Pass them as options or set them in the environment:
+
+
+
+```bash
+
+smartui storybook http://localhost:6006 --config .smartui.json --userName <LT_USERNAME> --accessKey <LT_ACCESS_KEY>
+
+```
+
+
+
+```bash
+
+export LT_USERNAME="<your username>"
+
+export LT_ACCESS_KEY="<your access key>"
+
+smartui storybook http://localhost:6006 --config .smartui.json
+
+```
+
+
+
+Keep the CLI running until it reports the build result: the tunnel stays open until the build finishes or fails, or until the CLI has waited two hours, in which case it closes the tunnel and exits with a non-zero code. If the dev server is still compiling when you run the command, open the Storybook once in a browser first so that the first render does not time out.
+
+
+
+For a Storybook URL the renderer keeps the load on your tunnel low: the stories are split into chunks of `chunkSize` stories (default 50 for a Storybook URL, minimum 25, maximum 100) and each chunk renders every configured browser, viewport and custom viewport one after another, reusing the assets it already fetched through the tunnel. A chunk therefore produces `chunkSize × browsers × viewports` screenshots; lower `chunkSize` in the config file for Storybooks with many browsers and viewports so that individual chunks stay short.
+
+
+
+You can always provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
 
 
@@ -172,7 +208,7 @@ To test locally hosted apps, set up the TestMu AI tunnel. OS-specific guides:
 
 
 
-Configure tunnel in your SmartUI config:
+This applies to a `storybook-static` build whose pages need a tunnel to load assets. For a Storybook URL the CLI starts its own tunnel and the `tunnel` block in the config file is ignored. Configure the tunnel in your SmartUI config:
 
 
 
@@ -219,6 +255,8 @@ Earn free [TestMu AI Certifications](https://www.testmuai.com/certifications/) f
 Learn modern testing through tutorials, guides, videos, and weekly updates:
 
 
+
+* [SmartUI with Storybook](https://www.testmuai.com/support/docs/smart-ui-storybook/?utm_source=github&utm_medium=referral)
 
 * [TestMu AI Blog](https://www.testmuai.com/blog/)
 

@@ -272,6 +272,84 @@ function validateCustomViewPorts(customViewports) {
     return
 }
 
+// LambdaTest credentials for the tunnel: command options first, then the environment.
+function pickCredentials(options = {}, env = process.env) {
+    const user = options.userName || env.LT_USERNAME;
+    const key = options.accessKey || env.LT_ACCESS_KEY;
+    if (!user || !key) {
+        return null;
+    }
+    return { user, key };
+}
+
+function resolveTunnelCredentials(options) {
+    const credentials = pickCredentials(options, process.env);
+    if (!credentials) {
+        const error = {
+            "error": "MISSING_LT_CREDENTIALS",
+            "message": "A Storybook URL is rendered through a LambdaTest tunnel and needs your LambdaTest credentials. Pass --userName and --accessKey, or set LT_USERNAME and LT_ACCESS_KEY."
+        };
+        console.log(JSON.stringify(error, null, 2));
+        process.exit(1);
+    }
+    return credentials;
+}
+
+const URL_SCHEME_PATTERN = /^https?:\/\//i;
+// Scheme-less inputs that can only be a running Storybook: a loopback host, a *.localhost
+// name, or any host:port, each with an optional path.
+const SCHEMELESS_HOST_PATTERN = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|[\w.-]+\.localhost|[\w.-]+:\d+)(:\d+)?(\/.*)?$/i;
+
+// Decides whether the positional argument is a Storybook URL or a static build directory.
+// An existing path always wins, so a folder that happens to be called `localhost` still works.
+function isStorybookUrl(serve) {
+    if (typeof serve !== 'string' || serve === '') {
+        return false;
+    }
+    if (URL_SCHEME_PATTERN.test(serve)) {
+        return true;
+    }
+    if (fs.existsSync(serve)) {
+        return false;
+    }
+    return SCHEMELESS_HOST_PATTERN.test(serve);
+}
+
+const ANY_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+// Adds http:// to a scheme-less input; any explicit scheme is left for the protocol check.
+function withUrlScheme(serve) {
+    return ANY_SCHEME_PATTERN.test(serve) ? serve : `http://${serve}`;
+}
+
+// Canonical form of the Storybook URL sent to the renderer: http(s) only, no query or
+// fragment, and a trailing slash so that `new URL('iframe.html', baseURL)` resolves
+// inside the Storybook path instead of replacing its last segment.
+function normalizeStorybookUrl(serve) {
+    let url;
+    try {
+        url = new URL(withUrlScheme(serve));
+    } catch (error) {
+        throw new ValidationError(`Invalid Storybook URL: ${serve}`);
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        throw new ValidationError('Storybook URL must start with http:// or https://');
+    }
+    url.search = '';
+    url.hash = '';
+    let segments = url.pathname.split('/');
+    let last = segments[segments.length - 1];
+    if (last && last.includes('.')) {
+        // A file such as iframe.html or index.html was given; use its directory.
+        segments[segments.length - 1] = '';
+        url.pathname = segments.join('/');
+    }
+    if (!url.pathname.endsWith('/')) {
+        url.pathname = url.pathname + '/';
+    }
+    return url.href;
+}
+
 module.exports = {
     ValidationError,
     validateProjectToken,
@@ -283,4 +361,8 @@ module.exports = {
     validateConfigResolutions,
     validateCustomViewPorts,
     validateTunnel,
+    pickCredentials,
+    resolveTunnelCredentials,
+    isStorybookUrl,
+    normalizeStorybookUrl,
 };
