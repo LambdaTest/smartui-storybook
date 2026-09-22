@@ -73,7 +73,7 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
                 key: credentials.key,
                 baseURL: toRenderBaseURL(baseURL)
             },
-            maxStories: storybookConfig.chunkSize || 100
+            maxStories: storybookConfig.chunkSize || constants.URL_MODE_DEFAULT_CHUNK_SIZE
         });
         // The tunnel is the data path of the build, so keep it open until the build is over:
         // wait far longer than for a static build and report loudly if we still give up.

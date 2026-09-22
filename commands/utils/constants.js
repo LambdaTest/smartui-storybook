@@ -29,4 +29,8 @@ constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
 // waits for it much longer than for a static build before giving up.
 constants.URL_MODE_MAX_WAIT_MS = 2 * 60 * 60 * 1000
 
+// Default chunk size for a Storybook URL build: every chunk renders all browsers and
+// viewports through the tunnel one after another, so it is kept smaller than the static default.
+constants.URL_MODE_DEFAULT_CHUNK_SIZE = 50
+
 module.exports = { constants };

@@ -141,7 +141,7 @@ smartui storybook http://localhost:6006 --config .smartui.json
 
 Keep the CLI running until it reports the build result: the tunnel stays open until the build finishes or fails, or until the CLI has waited two hours, in which case it closes the tunnel and exits with a non-zero code. If the dev server is still compiling when you run the command, open the Storybook once in a browser first so that the first render does not time out.
 
-For a Storybook URL the renderer keeps the load on your tunnel low: the stories are split into chunks of `chunkSize` stories (default 100, minimum 25, maximum 100) and each chunk renders every configured browser, viewport and custom viewport one after another, reusing the assets it already fetched through the tunnel. A chunk therefore produces `chunkSize × browsers × viewports` screenshots; lower `chunkSize` in the config file for Storybooks with many browsers and viewports so that individual chunks stay short.
+For a Storybook URL the renderer keeps the load on your tunnel low: the stories are split into chunks of `chunkSize` stories (default 50 for a Storybook URL, minimum 25, maximum 100) and each chunk renders every configured browser, viewport and custom viewport one after another, reusing the assets it already fetched through the tunnel. A chunk therefore produces `chunkSize × browsers × viewports` screenshots; lower `chunkSize` in the config file for Storybooks with many browsers and viewports so that individual chunks stay short.
 
 You can always provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
