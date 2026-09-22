@@ -1,188 +1,312 @@
- Smart UI Testing With StoryBook ![Storybook](https://img.shields.io/badge/-Storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white)
+# Run SmartUI Storybook Tests on TestMu AI (Formerly LambdaTest)
 
-<img height="400" src="https://user-images.githubusercontent.com/126776938/232535120-b4856bdd-c869-4bcd-bcdb-29a83e30505c.png">
 
 
 <p align="center">
-  <a href="https://www.lambdatest.com/blog/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Blog</a>
-  &nbsp; &#8901; &nbsp;
-  <a href="https://www.lambdatest.com/support/docs/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Docs</a>
-  &nbsp; &#8901; &nbsp;
-  <a href="https://www.lambdatest.com/learning-hub/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Learning Hub</a>
-  &nbsp; &#8901; &nbsp;
-  <a href="https://www.lambdatest.com/newsletter/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Newsletter</a>
-  &nbsp; &#8901; &nbsp;
-  <a href="https://www.lambdatest.com/certifications/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample" target="_bank">Certifications</a>
-  &nbsp; &#8901; &nbsp;
-  <a href="https://www.youtube.com/c/LambdaTest" target="_bank">YouTube</a>
+
+  <a href="https://www.testmuai.com/"><img src="https://img.shields.io/badge/MADE%20BY%20TestMu%20AI-000000.svg?style=for-the-badge&labelColor=000" alt="Made by TestMu AI"></a>
+
+  <a href="https://www.npmjs.com/package/@lambdatest/smartui-storybook"><img src="https://img.shields.io/npm/v/@lambdatest/smartui-storybook.svg?style=for-the-badge&labelColor=000000" alt="npm version"></a>
+
+  <a href="https://community.testmuai.com/"><img src="https://img.shields.io/badge/Join%20the%20community-blueviolet.svg?style=for-the-badge&labelColor=000000" alt="Community"></a>
+
 </p>
-&emsp;
-&emsp;
-&emsp;
-
-*Using the LambdaTest platform, you can perform regression testing in just one click and find Visual UI Regression bugs easily with the help of Smart Testing. The @lambdatest/smartui package is LambdaTest's command-line interface (CLI) aimed to help you run your SmartUI tests on LambdaTest platform.*
-
-*Learn the how to get started with Smart UI testing with StoryBook on the LambdaTest platform.*
-
-[<img height="58" width="200" src="https://user-images.githubusercontent.com/70570645/171866795-52c11b49-0728-4229-b073-4b704209ddde.png">](https://accounts.lambdatest.com/register?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample)
 
 
-## Table of Contents:
 
-* [Pre-requisites](#pre-requisites)
-* [Steps To Create A SmartUI Project](#steps-to-create-a-smartui-project)
-* [Running Your First StoryBook SmartUI Test](#running-your-first-storybook-smartui-test)
+## Getting Started
 
 
-## Pre-requisites
 
-1. Basic understanding of [StoryBook](https://storybook.js.org/docs/react/get-started/introduction) is required.
-2. Node version installed should be higher than `14.15.0.` Click [here](https://nodejs.org/en/download/releases/) to know more.
-3. StoryBook version installed should be higher than `6.4.0.` Click [here](https://github.com/storybookjs/storybook/releases) to know more.
-4. Login to [LambdaTest SmartUI](https://smartui.lambdatest.com/) with your credentials.
+[TestMu AI](https://www.testmuai.com/) (Formerly LambdaTest) is the world's first full-stack AI Agentic Quality Engineering platform that empowers teams to test intelligently, smarter, and ship faster. Built for scale, it offers a full-stack testing cloud with 10K+ real devices and 3,000+ browsers. With AI-native test management, MCP servers, and agent-based automation, TestMu AI supports Selenium, Appium, Playwright, and all major frameworks. 
 
-## Steps To Create A SmartUI Project
 
-The first step is to create a project with the application in which we will combine all your builds run on the project. To create a SmartUI Project, follow these steps:
 
-1. Go to the [Projects page](https://smartui.lambdatest.com/).
-2. Click on the `new project` button.
-3. Select the platform as **Web** for executing your `StoryBook` tests.
-4. Add name of the project, approvers for the changes found, tags for any filter or easy navigation.
-5. Click on the **Submit**.
+With TestMu AI (Formerly LambdaTest), you can run SmartUI visual regression tests for Storybook components across real browsers and operating systems using the `@lambdatest/smartui-storybook` CLI.
 
-## Running Your First StoryBook SmartUI Test
 
-### Step 1: Install the Dependencies
 
-Install required NPM modules for `LambdaTest Smart UI StoryBook CLI` in your Frontend project.
+- [Sign up on TestMu AI](https://www.testmuai.com/register/) (Formerly LambdaTest).
+
+- Follow the [TestMu AI Documentation](https://www.testmuai.com/support/docs/) for the full setup walkthrough.
+
+
+
+### Prerequisites
+
+
+
+1. Basic understanding of Storybook.
+
+2. Node.js version higher than `14.15.0`. See Node.js releases.
+
+3. Storybook version higher than `6.4.0`. See Storybook releases.
+
+4. A TestMu AI account — sign up here and log into TestMu AI SmartUI.
+
+
+
+### Setup
+
+
+
+Clone the repository:
+
+
+
+```bash
+
+git clone https://github.com/LambdaTest/smartui-storybook
+
+cd smartui-storybook
 
 ```
+
+
+
+Install the SmartUI Storybook CLI globally:
+
+
+
+```bash
+
 npm install @lambdatest/smartui-storybook -g
-```
-
-### Step 2: Setup with StoryBook
-
-Add the following to your `.storybook/main.js`. You can read more about this here Storybook [Feature flags](https://storybook.js.org/docs/react/configure/overview#feature-flags).
 
 ```
+
+
+
+Add the following to your `.storybook/main.js`:
+
+
+
+```javascript
+
 module.exports = {
+
   features: {
+
     buildStoriesJson: true,
+
   },
+
 };
+
 ```
 
-### Step 3: Configure your Project Token
 
-Setup your project token show in the **SmartUI** app after, creating your project.
 
- <b>For Linux/macOS:</b>
- 
-  ```
- export PROJECT_TOKEN="123456#1234abcd-****-****-****-************"
-  ```
+Create a SmartUI project at the Projects page, then set your project token:
 
-   <b>For Windows:</b>
 
-  ```
-  set PROJECT_TOKEN="123456#1234abcd-****-****-****-************"
-  ```
 
-## Step 4: Create and Configure SmartUI Config
+- For Linux/macOS:
 
-You can now configure your project settings on using various available options to run your tests with the SmartUI integration. To generate the configuration file, please execute the following command:
+
 
 ```bash
+
+export PROJECT_TOKEN="123456#1234abcd-****-****-****-************"
+
+```
+
+
+
+- For Windows:
+
+
+
+```bash
+
+set PROJECT_TOKEN="123456#1234abcd-****-****-****-************"
+
+```
+
+
+
+Generate the SmartUI configuration file:
+
+
+
+```bash
+
 smartui config create .smartui.json
+
 ```
 
-Once, the configuration file will be created, you will be seeing the default configuration pre-filled in the configuration file:
+
+
+### Run tests
+
+
+
+Execute visual regression tests on your Storybook components:
+
+
 
 ```bash
-{
-  "storybook": {
-    "browsers": [
-      "chrome",
-      "firefox",
-      "safari"
-      // Add more browser configuration here
-    ],
-    "resolutions": [
-      [1920, 1080]    // Add more view ports to capture here
-    ],
-    "include": [],    // (Optional) Only compare limited stories
-    "exclude": []     // (Optional) Don't compare the stories
-  }
-}
-```
 
-### Step 5: Execute the Tests on SmartUI Cloud using CLI
-
-You can now execute your `StoryBook` components for `Visual Regression Testing` using the following options:. Run the following command to run Visual Regression tests on your Storybook components.
-
-```bash
 smartui storybook http://localhost:6006 --config .smartui.json
+
 ```
 
-When given a URL, the CLI renders the running Storybook directly from that URL. It starts a [LambdaTest tunnel](https://www.lambdatest.com/support/docs/testing-locally-hosted-pages/) so the SmartUI renderer can reach a Storybook on `localhost` or on your internal network, and stops the tunnel once the build finishes. The URL can be a Storybook dev server started with `npm run storybook` (webpack or Vite builder) or any hosted build.
 
-The tunnel needs your LambdaTest username and access key. Pass them as options or set them in the environment:
+
+When given a URL, the CLI renders the running Storybook directly from that URL. It starts a [TestMu AI tunnel](https://www.lambdatest.com/support/docs/testing-locally-hosted-pages/) so the SmartUI renderer can reach a Storybook on `localhost` or on your internal network, and stops the tunnel once the build finishes. The URL can be a Storybook dev server started with `npm run storybook` (webpack or Vite builder) or any hosted build.
+
+
+
+The tunnel needs your TestMu AI (Formerly LambdaTest) username and access key. Pass them as options or set them in the environment:
+
+
 
 ```bash
+
 smartui storybook http://localhost:6006 --config .smartui.json --userName <LT_USERNAME> --accessKey <LT_ACCESS_KEY>
+
 ```
 
+
+
 ```bash
+
 export LT_USERNAME="<your username>"
+
 export LT_ACCESS_KEY="<your access key>"
+
 smartui storybook http://localhost:6006 --config .smartui.json
+
 ```
+
+
 
 Keep the CLI running until it reports the build result: the tunnel stays open until the build finishes or fails, or until the CLI has waited two hours, in which case it closes the tunnel and exits with a non-zero code. If the dev server is still compiling when you run the command, open the Storybook once in a browser first so that the first render does not time out.
 
+
+
 For a Storybook URL the renderer keeps the load on your tunnel low: the stories are split into chunks of `chunkSize` stories (default 50 for a Storybook URL, minimum 25, maximum 100) and each chunk renders every configured browser, viewport and custom viewport one after another, reusing the assets it already fetched through the tunnel. A chunk therefore produces `chunkSize × browsers × viewports` screenshots; lower `chunkSize` in the config file for Storybooks with many browsers and viewports so that individual chunks stay short.
+
+
 
 You can always provide a path to the `storybook-static` directory instead of the local Storybook URL. Use `--help` for more information on usage.
 
-## Documentation & Resources :books:
-      
-Visit the following links to learn more about LambdaTest's features, setup and tutorials around test automation, mobile app testing, responsive testing, and manual testing.
+
+
+### Local testing with TestMu AI Tunnel
+
+
+
+To test locally hosted apps, set up the TestMu AI tunnel. OS-specific guides:
+
+
+
+- [Local Testing on Windows](https://www.testmuai.com/support/docs/local-testing-for-windows/)
+
+- [Local Testing on macOS](https://www.testmuai.com/support/docs/local-testing-for-macos/)
+
+- [Local Testing on Linux](https://www.testmuai.com/support/docs/local-testing-for-linux/)
+
+
+
+This applies to a `storybook-static` build whose pages need a tunnel to load assets. For a Storybook URL the CLI starts its own tunnel and the `tunnel` block in the config file is ignored. Configure the tunnel in your SmartUI config:
+
+
+
+```json
+
+{
+
+  "tunnel": true
+
+}
+
+```
+
+
+
+## Contributions
+
+
+
+Contributions are welcome. Open an issue to discuss your idea before submitting a pull request. When reporting bugs, include your Node.js version, OS, and npm version.
+
+
+
+## TestMu AI (Formerly LambdaTest) Community
+
+
+
+Connect with testers and developers in the [TestMu AI Community](https://community.testmuai.com/). Ask questions, share what you are building, and discuss best practices in test automation and DevOps.
+
+  
+
+## TestMu AI (Formerly LambdaTest) Certifications
+
+
+
+Earn free [TestMu AI Certifications](https://www.testmuai.com/certifications/) for testers, developers, and QA engineers. Validate your skills in Selenium, Cypress, Playwright, Appium, Espresso and more. Industry-recognized, shareable on LinkedIn, and built by practitioners, not marketers.
+
+
+
+## Learning Resources by TestMu AI (Formerly LambdaTest)
+
+
+
+Learn modern testing through tutorials, guides, videos, and weekly updates:
+
+
 
 * [SmartUI with Storybook](https://www.testmuai.com/support/docs/smart-ui-storybook/?utm_source=github&utm_medium=referral)
-* [LambdaTest Blog](https://www.lambdatest.com/blog/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample)
-* [LambdaTest Learning Hub](https://www.lambdatest.com/learning-hub/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample)    
 
-## LambdaTest Community :busts_in_silhouette:
+* [TestMu AI Blog](https://www.testmuai.com/blog/)
 
-The [LambdaTest Community](https://community.lambdatest.com/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample) allows people to interact with tech enthusiasts. Connect, ask questions, and learn from tech-savvy people. Discuss best practises in web development, testing, and DevOps with professionals from across the globe 🌎
+* [TestMu AI Learning Hub](https://www.testmuai.com/learning-hub/)
 
-## What's New At LambdaTest ❓
+* [TestMu AI on YouTube](https://www.youtube.com/@TestMuAI)
 
-To stay updated with the latest features and product add-ons, visit [Changelog](https://changelog.lambdatest.com/) 
-      
-## About LambdaTest
+* [TestMu AI Newsletter](https://www.testmuai.com/newsletter/)
 
-[LambdaTest](https://www.lambdatest.com?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample) is an intelligent unified digital experience testing cloud that helps businesses drastically reduce time to market through faster test execution, ensuring quality releases and accelerated digital transformation. The platforms allows you to perform both real time and automation testing across 3000+ environments and real mobile devices, making it a top choice among other cloud testing platforms. Over 10,000+ enterprise customers and 2+ million users across 130+ countries rely on LambdaTest for their testing needs. 
+  
 
-### Features
+## LambdaTest is Now TestMu AI
 
-* Run Selenium, Cypress, Puppeteer, Playwright, and Appium automation tests across 3000+ real desktop and mobile environments.
-* Real-time cross browser testing on 3000+ environments.
-* Test on Real device cloud
-* Blazing fast test automation with HyperExecute
-* Accelerate testing, shorten job times and get faster feedback on code changes with Test At Scale.
-* Smart Visual Regression Testing on cloud
-* 120+ third-party integrations with your favorite tool for CI/CD, Project Management, Codeless Automation, and more.
-* Automated Screenshot testing across multiple browsers in a single click.
-* Local testing of web and mobile apps.
-* Online Accessibility Testing across 3000+ desktop and mobile browsers, browser versions, and operating systems.
-* Geolocation testing of web and mobile apps across 53+ countries.
-* LT Browser - for responsive testing across 50+ pre-installed mobile, tablets, desktop, and laptop viewports
-    
-[<img height="58" width="200" src="https://user-images.githubusercontent.com/70570645/171866795-52c11b49-0728-4229-b073-4b704209ddde.png">](https://accounts.lambdatest.com/register?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample)
-      
-## We are here to help you :headphones:
 
-* Got a query? we are available 24x7 to help. [Contact Us](mailto:support@lambdatest.com)
-* For more info, visit - [LambdaTest](https://www.lambdatest.com/?utm_source=github&utm_medium=repo&utm_campaign=playwright-sample)
+
+On **January 12, 2026**, [LambdaTest evolved to TestMu AI](https://www.testmuai.com/lambdatest-is-now-testmuai/), the world's first fully autonomous **Agentic AI Quality Engineering Platform**.
+
+
+
+Same team. Same infrastructure. Same customer accounts. All existing LambdaTest logins, scripts, capabilities, and integrations continue to work without change.
+
+
+
+ð Find the new home for [LambdaTest](https://www.testmuai.com).
+
+
+
+### How LambdaTest Evolved into TestMu AI
+
+
+
+In 2017, we launched LambdaTest with a simple mission: make testing fast, reliable, and accessible. As LambdaTest grew, we expanded into Test Intelligence, Visual Regression Testing, Accessibility Testing, API Testing, and Performance Testing, covering the full depth of the testing lifecycle.
+
+
+
+As software development entered the AI era, testing had to evolve, too. We rebuilt the architecture to be AI-native from the ground up, with autonomous agents that **plan, author, execute, analyze, and optimize tests** while keeping humans in the loop. The platform integrates with your repos, CI, IDEs, and terminals, continuously learning from every code change and development signal.
+
+
+
+That evolution earned a new name: **TestMu AI**, built for an AI-first future of quality engineering. TestMu is not a new name for us. It is the name of our annual community conference, which has brought together 100,000+ quality engineers to discuss how AI would reshape testing, long before that became an industry norm. 
+
+
+
+What started as a high-performance cloud testing platform has transformed into an AI-native, multi-agent system powering a connected, end-to-end quality layer. That evolution defined a new identity: LambdaTest evolved into TestMu AI, built for an AI-first future of quality engineering.
+
+
+
+## Support
+
+
+
+Got a question? Email [support@testmuai.com](mailto:support@testmuai.com) or chat with us 24x7 from our chat portal.
+
