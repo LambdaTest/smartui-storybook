@@ -24,6 +24,8 @@ constants.VALID_BROWSERS = ['chrome', 'safari', 'firefox', 'edge'];
 constants.ERROR_CATCHALL = 1
 constants.ERROR_BUILD_ALREADY_EXISTS = 3
 constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
+// only with --fail-on: the CLI stopped waiting before the build had a verdict
+constants.ERROR_VERDICT_TIMEOUT = 5
 
 // A Storybook URL build renders through the tunnel this process keeps open, so the CLI
 // waits for it much longer than for a static build before giving up.

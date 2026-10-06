@@ -7,6 +7,7 @@ const staticBuild = require('./utils/static')
 const { startTunnel, stopTunnel } = require('./utils/tunnel')
 var { constants } = require('./utils/constants');
 const { shortPolling } = require('./utils/polling');
+const { finishRun } = require('./utils/results');
 
 const TUNNEL_RENDER_ATTEMPTS = 3;
 const TUNNEL_RENDER_RETRY_DELAY_MS = 5000;
@@ -237,6 +238,10 @@ function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source
     if (screenshotNames) {
         renderConfig.screenshotNames = screenshotNames;
     }
+    // only sent when set, so a build without it posts the same payload as before
+    if (storybookConfig.skipBuildAutoComplete === true) {
+        renderConfig.skipBuildAutoComplete = true;
+    }
 
     return {
         downloadURL: source.downloadURL,
@@ -295,6 +300,7 @@ async function requestRender(payload, options, pollingOptions = {}) {
             console.log(`[smartui] Error: gave up waiting for the build${reason === 'timeout' ? ` after ${waited} minutes` : ' (build status unavailable)'}. The tunnel is closing now, so any chunk still rendering will fail. Check the build on LambdaTest SmartUI.`);
             process.exitCode = constants.ERROR_CATCHALL;
         }
+        finishRun(reason, pollingOptions.statusData, response.data.data.buildId, options);
         return;
     }
 }

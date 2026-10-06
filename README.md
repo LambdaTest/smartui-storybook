@@ -192,6 +192,47 @@ You can always provide a path to the `storybook-static` directory instead of the
 
 
 
+### Use the result in CI
+
+
+
+`--fetch-results [filename]` writes the build result to a JSON file (default `results.json`) once the build completes: build id, URL, the `--fail-on` policy and its verdict, counts (approved, changes found, under screening, rejected, new) and one row per screenshot with story name, browser, viewport, status and mismatch.
+
+
+
+`--fail-on [policy]` makes the job fail when the visual check fails. The policy can also come from `SMARTUI_FAIL_ON` or `failOn` in the `storybook` block of the config file; the flag wins over the environment, which wins over the config. The default is `none`, and `--fail-on` with no value means `unreviewed`.
+
+
+
+| Policy | Fails the job when |
+|---|---|
+| `none` | never (default) |
+| `unreviewed` | any screenshot is changes found, under screening, new or rejected |
+| `changes` | any screenshot is changes found or rejected; new stories pass |
+| `rejected` | any screenshot is rejected |
+
+
+
+Exit codes with `--fail-on`: `4` when the policy fails, `5` when the CLI stopped waiting before the build had a verdict. A baseline build always passes.
+
+
+
+```bash
+
+smartui storybook ./storybook-static --config .smartui.json --fail-on --fetch-results smartui-results.json
+
+```
+
+
+
+### Long-running builds
+
+
+
+SmartUI completes a build that is still running 30 minutes after it started. For larger Storybooks set `"skipBuildAutoComplete": true` in the `storybook` block of the config file: the build then stays open until it finishes, and is closed automatically only after 24 hours. The CLI itself still waits at most 30 minutes for a static build (two hours for a Storybook URL); with `--fail-on`, a build that has not finished by then exits `5` and can be followed on the dashboard.
+
+
+
 ### Local testing with TestMu AI Tunnel
 
 

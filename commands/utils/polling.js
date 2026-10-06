@@ -63,6 +63,7 @@ async function shortPolling(buildId, retries = 0, options, pollingOptions = {}) 
                             console.log('No comparisons run. No screenshot in the current build has the corresponding screenshot in baseline build.');
                         }
                     }
+                    pollingOptions.statusData = response.data;
                     return 'completed';
                 } else if (pollingOptions.stopOnError && response.data.buildStatus === 'error') {
                     console.log('[smartui] Build failed. Build URL: ', response.data.buildURL);

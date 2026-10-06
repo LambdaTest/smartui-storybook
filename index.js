@@ -7,6 +7,7 @@ const { validateProjectToken, validateLatestBuild, validateConfig, validateTunne
 const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
+const { resolveFailOn, resolveResultsFile, FAIL_ON_POLICIES } = require('./commands/utils/results');
 
 program
     .name('smartui')
@@ -37,6 +38,8 @@ program.command('storybook')
     .option('--buildName <string>', 'Specify the build name for the pipeline')
     .option('--userName <string>', 'LambdaTest username, used to start the tunnel for a Storybook URL. Defaults to LT_USERNAME')
     .option('--accessKey <string>', 'LambdaTest access key, used to start the tunnel for a Storybook URL. Defaults to LT_ACCESS_KEY')
+    .option('--fetch-results [filename]', 'Write the build results to a JSON file once the build completes (default results.json)')
+    .option('--fail-on [policy]', `Exit 4 when the visual check fails: ${FAIL_ON_POLICIES.join('|')}. No value means unreviewed. Also SMARTUI_FAIL_ON or config failOn`)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         
@@ -61,6 +64,13 @@ program.command('storybook')
         }
         if (options.config) {
             options.config = validateConfig(options.config);
+        }
+        try {
+            options.failOn = resolveFailOn(options.failOn, process.env.SMARTUI_FAIL_ON, options.config && options.config.failOn);
+            options.resultsFile = resolveResultsFile(options.fetchResults);
+        } catch (error) {
+            console.log(`[smartui] Error: ${error.message}`);
+            process.exit(1);
         }
 
         await validateProjectToken(options);
