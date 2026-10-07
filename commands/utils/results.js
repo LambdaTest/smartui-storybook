@@ -71,8 +71,12 @@ function finishRun(reason, statusData, buildId, options) {
     const policy = options.failOn || 'none';
     const completed = reason === 'completed' && statusData;
     const summary = completed ? summarise(statusData) : { counts: null, rows: [] };
+    // a non-baseline build that completed with nothing rendered (e.g. closed by the 30-minute sweep) has no result to pass
+    const empty = completed && !statusData.baseline && summary.counts.total === 0;
     let verdict = 'unknown';
-    if (completed) {
+    if (empty) {
+        verdict = 'error';
+    } else if (completed) {
         verdict = policyFails(policy, summary.counts, statusData.baseline) ? 'failed' : 'passed';
     }
 
@@ -102,6 +106,11 @@ function finishRun(reason, statusData, buildId, options) {
             console.log(`[smartui] Visual check UNKNOWN (policy: ${policy}): no verdict before the CLI stopped waiting. Exit code ${constants.ERROR_VERDICT_TIMEOUT}.`);
             process.exitCode = constants.ERROR_VERDICT_TIMEOUT;
         }
+        return;
+    }
+    if (empty) {
+        console.log(`[smartui] Visual check ERROR (policy: ${policy}): the build completed with 0 screenshots. Exit code ${constants.ERROR_CATCHALL}. Check the build in SmartUI: ${statusData.buildURL || ''}`);
+        process.exitCode = constants.ERROR_CATCHALL;
         return;
     }
     const c = summary.counts;

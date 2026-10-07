@@ -73,6 +73,20 @@ describe('finishRun', () => {
 		expect(process.exitCode).toBeUndefined();
 	});
 
+	test('exit 1 when a non-baseline build completed with 0 screenshots under a policy', () => {
+		const file = path.join(dir, 'r.json');
+		finishRun('completed', { buildURL: 'u', baseline: false, totalScreenshots: 0, screenshots: [] }, 'id-1', { failOn: 'changes', resultsFile: file });
+		expect(process.exitCode).toBe(1);
+		expect(JSON.parse(fs.readFileSync(file, 'utf8')).verdict).toBe('error');
+	});
+
+	test('0 screenshots keeps exit 0 without a policy, and a baseline with 0 screenshots passes', () => {
+		finishRun('completed', { baseline: false, totalScreenshots: 0, screenshots: [] }, 'id-1', { failOn: 'none' });
+		expect(process.exitCode).toBeUndefined();
+		finishRun('completed', { baseline: true, totalScreenshots: 0, screenshots: [] }, 'id-1', { failOn: 'unreviewed' });
+		expect(process.exitCode).toBeUndefined();
+	});
+
 	test('exit 5 when no verdict arrived under a policy', () => {
 		finishRun('timeout', undefined, 'id-1', { failOn: 'changes' });
 		expect(process.exitCode).toBe(5);
