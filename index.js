@@ -8,12 +8,20 @@ const { createConfig } = require('./commands/config');
 const { version } = require('./package.json');
 const { checkUpdate } = require('./commands/utils/package');
 const { resolveFailOn, resolveResultsFile, FAIL_ON_POLICIES } = require('./commands/utils/results');
+const { registerExitHint } = require('./commands/utils/exit');
+const { constants } = require('./commands/utils/constants');
+
+registerExitHint();
 
 program
     .name('smartui')
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
     .version('v' + version)
-    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage']));
+    .addOption(new Option('--env <prod|stage>', 'Runtime environment option').choices(['prod', 'stage']))
+    // commander's own parse errors (unknown command or option, missing argument) exit 2; help and version stay 0
+    .exitOverride(function (err) {
+        process.exit(err.exitCode === 0 ? 0 : constants.ERROR_USAGE);
+    });
 
 const configCommand = program.command('config')
     .description('Manage LambdaTest SmartUI config')
@@ -53,7 +61,7 @@ program.command('storybook')
                 "message": "The --buildName flag requires a value."
             };
             console.log(JSON.stringify(error, null, 2));
-            process.exit(1);
+            process.exit(constants.ERROR_USAGE);
         }
         // A Storybook URL is rendered through a LambdaTest tunnel, which needs credentials.
         if (isStorybookUrl(serve)) {
@@ -70,7 +78,7 @@ program.command('storybook')
             options.resultsFile = resolveResultsFile(options.fetchResults);
         } catch (error) {
             console.log(`[smartui] Error: ${error.message}`);
-            process.exit(1);
+            process.exit(constants.ERROR_USAGE);
         }
 
         await validateProjectToken(options);

@@ -22,6 +22,8 @@ constants.VALID_BROWSERS = ['chrome', 'safari', 'firefox', 'edge'];
 
 // Error codes
 constants.ERROR_CATCHALL = 1
+// wrong command, unknown or missing flag, or an invalid flag value
+constants.ERROR_USAGE = 2
 constants.ERROR_BUILD_ALREADY_EXISTS = 3
 constants.ERROR_CHANGES_FOUND_OR_REJECTED = 4
 // only with --fail-on: the CLI stopped waiting before the build had a verdict
