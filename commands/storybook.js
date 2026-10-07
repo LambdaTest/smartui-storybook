@@ -238,10 +238,6 @@ function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source
     if (screenshotNames) {
         renderConfig.screenshotNames = screenshotNames;
     }
-    // only sent when set, so a build without it posts the same payload as before
-    if (storybookConfig.skipBuildAutoComplete === true) {
-        renderConfig.skipBuildAutoComplete = true;
-    }
 
     return {
         downloadURL: source.downloadURL,

@@ -123,9 +123,4 @@ describe('render payload', () => {
 		expect(payload.storybookConfig.resolutions).toEqual([{ width: 360, height: 640 }]);
 		expect(payload.storybookConfig.lazyLoadedStories).toEqual(['x--y']);
 	});
-	test('skipBuildAutoComplete is sent only when true', () => {
-		const args = { storyIds: ['a'], source: { downloadURL: 'k', uploadId: 'u' }, git, buildName: 'b', tunnel: {}, maxStories: 10 };
-		expect(buildRenderPayload({ ...args, storybookConfig: { ...baseConfig, skipBuildAutoComplete: true } }).storybookConfig.skipBuildAutoComplete).toBe(true);
-		expect(buildRenderPayload({ ...args, storybookConfig: baseConfig }).storybookConfig).not.toHaveProperty('skipBuildAutoComplete');
-	});
 });
