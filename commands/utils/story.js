@@ -1,3 +1,28 @@
+// include/exclude patterns may start with name:, title:, id: or path: (title/name); unprefixed patterns and /regex/ test the name, as before
+const PATTERN_FIELDS = ['name', 'title', 'id', 'path'];
+
+function parsePattern(pattern) {
+	if (typeof pattern !== 'string' || pattern.startsWith('/')) {
+		return { field: 'name', value: pattern };
+	}
+	let [, field, value] = /^(\w+):(.*)$/s.exec(pattern) || [];
+	if (PATTERN_FIELDS.includes(field)) {
+		return { field, value };
+	}
+	return { field: 'name', value: pattern };
+}
+
+// Storybook 6 stories.json has kind where 7/8 index.json has title
+function storyField(story, field) {
+	const title = story.title || story.kind || '';
+	switch (field) {
+		case 'title': return title;
+		case 'id': return story.id || '';
+		case 'path': return title ? `${title}/${story.name}` : story.name;
+		default: return story.name;
+	}
+}
+
 // Returns true or false if the story should be skipped based on include and exclude config
 function skipStory(story, config) {
 	// skip story if it's docs for version 7
@@ -10,13 +35,14 @@ function skipStory(story, config) {
 		return true;
 	}
 
-    let matches = regexp => {
+    let matches = pattern => {
+		let { field, value: regexp } = parsePattern(pattern);
 		if (typeof regexp === 'string') {
 			let [, parsed, flags] = /^\/(.+)\/(\w+)?$/.exec(regexp) || [];
 			regexp = new RegExp(parsed ?? regexp, flags);
 		}
-  
-      	return regexp?.test?.(story.name);
+
+      	return regexp?.test?.(storyField(story, field));
     };
   
     let include = [].concat(config?.include).filter(Boolean);
