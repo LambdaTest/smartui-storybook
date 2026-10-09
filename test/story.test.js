@@ -85,6 +85,42 @@ describe('story index helpers', () => {
 			expect(excluded.storyIds).toEqual(['example-button--primary', 'example-button--secondary']);
 		});
 
+		test('a field prefix picks title, id or path instead of the name', () => {
+			expect(filterStoriesFromIndex(sb8Index.entries, { include: ['title:Example/Button'] }).storyIds)
+				.toEqual(['example-button--primary', 'example-button--secondary']);
+			expect(filterStoriesFromIndex(sb8Index.entries, { include: ['id:/^example-header--/'] }).storyIds)
+				.toEqual(['example-header--logged-in']);
+			expect(filterStoriesFromIndex(sb8Index.entries, { include: ['path:Example/Button/Secondary'] }).storyIds)
+				.toEqual(['example-button--secondary']);
+			expect(filterStoriesFromIndex(sb8Index.entries, { exclude: ['title:/Header$/'] }).storyIds)
+				.toEqual(['example-button--primary', 'example-button--secondary']);
+		});
+
+		test('name: is the explicit form of an unprefixed pattern', () => {
+			expect(filterStoriesFromIndex(sb8Index.entries, { include: ['name:Primary'] }).storyIds)
+				.toEqual(filterStoriesFromIndex(sb8Index.entries, { include: ['Primary'] }).storyIds);
+		});
+
+		test('unprefixed patterns still test only the name', () => {
+			// "Button" is in every Button title but in no story name
+			expect(filterStoriesFromIndex(sb8Index.entries, { include: ['Button'] }).storyIds).toEqual([]);
+		});
+
+		test('other colons and /regex/ patterns are not read as a prefix', () => {
+			const index = {
+				'a--state': { id: 'a--state', title: 'A', name: 'State: Active', type: 'story' },
+				'a--title': { id: 'a--title', title: 'A', name: 'title:Intro', type: 'story' },
+			};
+			expect(filterStoriesFromIndex(index, { include: ['State: Active'] }).storyIds).toEqual(['a--state']);
+			expect(filterStoriesFromIndex(index, { include: ['/^title:Intro$/'] }).storyIds).toEqual(['a--title']);
+			expect(filterStoriesFromIndex(index, { include: ['name:title:Intro'] }).storyIds).toEqual(['a--title']);
+		});
+
+		test('Storybook 6 kind is used as the title', () => {
+			expect(filterStoriesFromIndex(sb6Stories.stories, { include: ['title:Example/Button', 'path:/Large$/'] }).storyIds)
+				.toEqual(['example-button--primary', 'example-button--large']);
+		});
+
 		test('returns empty results for an empty or missing index', () => {
 			expect(filterStoriesFromIndex({}, {})).toEqual({ storyIds: [], screenshotNames: {} });
 			expect(filterStoriesFromIndex(null, {})).toEqual({ storyIds: [], screenshotNames: {} });
