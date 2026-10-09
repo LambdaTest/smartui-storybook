@@ -1,6 +1,6 @@
 {
   "name": "@lambdatest/smartui-storybook",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "TestMu AI's command-line interface (CLI) to run SmartUI visual regression tests for your Storybook stories across 3000+ real browsers",
   "main": "index.js",
   "repository": {
