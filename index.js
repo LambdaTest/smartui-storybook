@@ -48,6 +48,7 @@ program.command('storybook')
     .option('--accessKey <string>', 'LambdaTest access key, used to start the tunnel for a Storybook URL. Defaults to LT_ACCESS_KEY')
     .option('--fetch-results [filename]', 'Write the build results to a JSON file once the build completes (default results.json)')
     .option('--fail-on [policy]', `Exit 4 when the visual check fails: ${FAIL_ON_POLICIES.join('|')}. No value means unreviewed. Also SMARTUI_FAIL_ON or config failOn`)
+    .option('--only-changed', 'Capture only the stories affected by the last commit (static build with preview-stats.json). Also config storybook.onlyChanged', false)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         
@@ -71,6 +72,7 @@ program.command('storybook')
             options.tunnel = validateTunnel(options.config);
         }
         if (options.config) {
+            options.configFile = options.config;
             options.config = validateConfig(options.config);
         }
         try {

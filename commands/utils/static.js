@@ -58,16 +58,20 @@ function reportStoriesFound(storyIds) {
 	console.log('[smartui] Number of stories rendered may differ based on the config file.');
 }
 
-// Static build directory: read the story index from disk and return the ids to render.
-function filterStories(dirPath, storybookConfig) {
+// Static build directory: the story map from stories.json (Storybook 6) or index.json (7+).
+function readStoryIndex(dirPath) {
 	let stories = []
 	if (fs.existsSync((`${dirPath}/stories.json`))){
 		stories = JSON.parse(fs.readFileSync(`${dirPath}/stories.json`)).stories;
 	} else if(fs.existsSync((`${dirPath}/index.json`))){
 		stories = JSON.parse(fs.readFileSync(`${dirPath}/index.json`)).entries;
 	}
+	return stories
+}
 
-	const { storyIds } = filterStoriesFromIndex(stories, storybookConfig);
+// Static build directory: read the story index from disk and return the ids to render.
+function filterStories(dirPath, storybookConfig) {
+	const { storyIds } = filterStoriesFromIndex(readStoryIndex(dirPath), storybookConfig);
 	reportStoriesFound(storyIds);
 
 	return storyIds
@@ -113,4 +117,4 @@ async function fetchStoriesFromUrl(baseURL, storybookConfig) {
 	return { storyIds, screenshotNames };
 }
 
-module.exports = { getSignedUrl, compress, filterStories, fetchStoriesFromUrl };
+module.exports = { getSignedUrl, compress, readStoryIndex, filterStories, fetchStoriesFromUrl };

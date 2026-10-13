@@ -1,13 +1,14 @@
 const { httpClient } = require('./utils/httpClient')
 const fs = require('fs')
-const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl } = require('./utils/validate')
+const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl, fetchBaselineBranch } = require('./utils/validate')
 const { defaultSmartUIConfig } = require('./utils/config')
 const { getLastCommit } = require('./utils/git')
 const staticBuild = require('./utils/static')
 const { startTunnel, stopTunnel } = require('./utils/tunnel')
 var { constants } = require('./utils/constants');
 const { shortPolling } = require('./utils/polling');
-const { finishRun } = require('./utils/results');
+const { finishRun, finishSkippedRun } = require('./utils/results');
+const { selectAffectedStories, baselineGuardReason } = require('./utils/changed');
 
 const TUNNEL_RENDER_ATTEMPTS = 3;
 const TUNNEL_RENDER_RETRY_DELAY_MS = 5000;
@@ -43,6 +44,9 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
         console.log('[smartui] Warning: the tunnel block in the config file is ignored for a Storybook URL; the CLI starts its own tunnel.');
     }
     const credentials = options.ltCredentials || resolveTunnelCredentials(options);
+    if (isOnlyChanged(options, storybookConfig)) {
+        console.log('[smartui] Warning: --only-changed needs a static build directory (it reads preview-stats.json); capturing every story of the Storybook URL.');
+    }
 
     const { storyIds, screenshotNames } = await staticBuild.fetchStoriesFromUrl(baseURL, storybookConfig);
     const git = await resolveGitInfo();
@@ -89,6 +93,14 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
     // Get storyIds to be rendered 
     let storyIds = staticBuild.filterStories(dirPath, storybookConfig)
     let maxStories = storybookConfig.chunkSize || 100;
+
+    if (isOnlyChanged(options, storybookConfig)) {
+        storyIds = await selectChangedStories(dirPath, storyIds, options);
+        if (storyIds.length === 0) {
+            finishSkippedRun(options);
+            return;
+        }
+    }
 
     // Upload Storybook static
     await staticBuild.getSignedUrl(options)
@@ -145,6 +157,48 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
             process.exitCode = constants.ERROR_CATCHALL;
         });
 };
+
+function isOnlyChanged(options, storybookConfig) {
+    return Boolean(options.onlyChanged) || storybookConfig.onlyChanged === true;
+}
+
+// --only-changed: the story ids the last commit can affect, or every id with the reason printed
+async function selectChangedStories(dirPath, storyIds, options) {
+    const total = storyIds.length;
+    const commit = await getLastCommit();
+    const result = { applied: false, captured: total, total: total, commit: commit.shortHash, reason: '' };
+    options.onlyChangedResult = result;
+    const captureAll = function (reason) {
+        result.reason = reason;
+        console.log(`[smartui] --only-changed: capturing all ${total} stories: ${reason}`);
+        return storyIds;
+    };
+
+    if (!commit.shortHash) return captureAll('not a git repository, or git is not installed');
+    const branch = process.env.CURRENT_BRANCH || commit.branch;
+    // BASELINE_BRANCH replaces the project's baseline branch when the build is created
+    const baselineBranch = process.env.BASELINE_BRANCH || (branch ? await fetchBaselineBranch(options, branch, commit.shortHash) : '');
+    const guard = baselineGuardReason(branch, baselineBranch);
+    if (guard) return captureAll(guard);
+
+    const selection = selectAffectedStories({
+        dirPath,
+        stories: staticBuild.readStoryIndex(dirPath),
+        storyIds,
+        configFile: options.configFile
+    });
+    if (selection.reason) return captureAll(selection.reason);
+
+    result.applied = true;
+    result.captured = selection.storyIds.length;
+    if (selection.storyIds.length === 0) {
+        console.log(`[smartui] --only-changed: no stories affected by ${commit.shortHash}`);
+    } else {
+        console.log(`[smartui] --only-changed: ${selection.storyIds.length} of ${total} stories affected by ${commit.shortHash} (${selection.changedFiles.length} changed files)`);
+    }
+    selection.changedFiles.forEach(file => console.log(`[smartui]   ${file}`));
+    return selection.storyIds;
+}
 
 // Storybook origin as the renderer expects it: a directory URL with a trailing slash, so
 // that the renderer's `new URL('iframe.html', baseURL)` keeps a sub-path like `/storybook/`.

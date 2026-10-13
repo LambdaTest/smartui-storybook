@@ -192,6 +192,38 @@ You can always provide a path to the `storybook-static` directory instead of the
 
 
 
+### Capture only the stories a commit affects
+
+
+
+With a static build, `--only-changed` (or `"onlyChanged": true` in the `storybook` block of the config file) captures only the stories that the last commit can affect. The CLI diffs `HEAD~1..HEAD`, follows Storybook's module graph from each changed file to the story files that import it, and renders only those stories.
+
+
+
+```bash
+
+npx storybook build --stats-json
+
+smartui storybook ./storybook-static --config .smartui.json --only-changed
+
+```
+
+
+
+- Build Storybook with `--stats-json` (Storybook 7 and later) or `--webpack-stats-json` (Storybook 6.4 to 6.5), so that `preview-stats.json` is in the static build directory.
+
+- Run it on pull request builds. On GitHub Actions `pull_request` events the commit being built is the merge commit, so the diff covers the whole pull request. On a push of several commits only the last commit is diffed.
+
+- A checkout with `fetch-depth: 1` is fine: the CLI fetches the parent commit with `git fetch --deepen=1`.
+
+- Builds on the project's baseline branch always capture every story, so the baseline stays complete.
+
+- Every story is captured, with the reason printed, when a changed file cannot be traced: for example a CSS file pulled in with `@import`, anything under `.storybook/`, `package.json`, or the SmartUI config file. Markdown, CI configuration and test files are ignored.
+
+- When no story is affected, no build is created and the CLI exits 0. `--fetch-results` then writes `"verdict": "skipped"`.
+
+
+
 ### Local testing with TestMu AI Tunnel
 
 
