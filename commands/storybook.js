@@ -1,6 +1,6 @@
 const { httpClient } = require('./utils/httpClient')
 const fs = require('fs')
-const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl, fetchBaselineBranch } = require('./utils/validate')
+const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl } = require('./utils/validate')
 const { defaultSmartUIConfig } = require('./utils/config')
 const { getLastCommit } = require('./utils/git')
 const staticBuild = require('./utils/static')
@@ -8,7 +8,7 @@ const { startTunnel, stopTunnel } = require('./utils/tunnel')
 var { constants } = require('./utils/constants');
 const { shortPolling } = require('./utils/polling');
 const { finishRun, finishSkippedRun } = require('./utils/results');
-const { selectAffectedStories, baselineGuardReason } = require('./utils/changed');
+const { selectAffectedStories } = require('./utils/changed');
 
 const TUNNEL_RENDER_ATTEMPTS = 3;
 const TUNNEL_RENDER_RETRY_DELAY_MS = 5000;
@@ -175,11 +175,6 @@ async function selectChangedStories(dirPath, storyIds, options) {
     };
 
     if (!commit.shortHash) return captureAll('not a git repository, or git is not installed');
-    const branch = process.env.CURRENT_BRANCH || commit.branch;
-    // BASELINE_BRANCH replaces the project's baseline branch when the build is created
-    const baselineBranch = process.env.BASELINE_BRANCH || (branch ? await fetchBaselineBranch(options, branch, commit.shortHash) : '');
-    const guard = baselineGuardReason(branch, baselineBranch);
-    if (guard) return captureAll(guard);
 
     const selection = selectAffectedStories({
         dirPath,

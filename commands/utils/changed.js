@@ -317,17 +317,8 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
     };
 }
 
-// Scoped builds on the baseline branch would become the baseline once approved and drop every story they skipped.
-function baselineGuardReason(branch, baselineBranch) {
-    if (!branch) return 'the build has no branch. Set CURRENT_BRANCH';
-    if (!baselineBranch) return 'the project baseline branch is unknown (none is set, or the SmartUI backend does not report it)';
-    if (branch === baselineBranch) return `builds on the baseline branch '${baselineBranch}' always capture every story`;
-    return '';
-}
-
 module.exports = {
     selectAffectedStories,
-    baselineGuardReason,
     getChangedFiles,
     parsePorcelain,
     parsePackageLock,

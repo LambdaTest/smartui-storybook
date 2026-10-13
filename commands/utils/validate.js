@@ -112,24 +112,6 @@ async function validateLatestBuild(options) {
         });
 }
 
-// the project's baseline branch, or '' when the backend doesn't report it or the request fails
-async function fetchBaselineBranch(options, branch, commitId) {
-    try {
-        const response = await httpClient.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
-            headers: {
-                projectToken: process.env.PROJECT_TOKEN
-            },
-            params: {
-                branch: branch,
-                commitId: commitId
-            }
-        });
-        return (response.data && response.data.baselineBranch) || '';
-    } catch (error) {
-        return '';
-    }
-}
-
 function validateConfig(configFile) {
     // Verify config file exists
     if (!fs.existsSync(configFile)) {
@@ -374,7 +356,6 @@ module.exports = {
     validateStorybookUrl,
     validateStorybookDir,
     validateLatestBuild,
-    fetchBaselineBranch,
     validateConfig,
     validateConfigBrowsers,
     validateConfigResolutions,

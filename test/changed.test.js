@@ -3,7 +3,7 @@ const os = require('os');
 const path = require('path');
 const cp = require('child_process');
 const {
-	selectAffectedStories, baselineGuardReason, getChangedFiles, parsePorcelain, parsePackageLock, parseYarnLock,
+	selectAffectedStories, getChangedFiles, parsePorcelain, parsePackageLock, parseYarnLock,
 	parsePnpmLock, changedPackages, normalizeModuleName, buildImporterGraph, walkImporters
 } = require('./../commands/utils/changed');
 
@@ -218,17 +218,5 @@ describe('webpack stats', () => {
 			] }
 		] });
 		expect([...walkImporters(['src/A.js'], importers)]).toEqual(['src/A.js', 'src/A.stories.js']);
-	});
-});
-
-describe('baselineGuardReason', () => {
-	test('refuses the baseline branch, a missing branch and an unknown baseline', () => {
-		expect(baselineGuardReason('main', 'main')).toMatch(/baseline branch 'main'/);
-		expect(baselineGuardReason('', 'main')).toMatch(/CURRENT_BRANCH/);
-		expect(baselineGuardReason('feature', '')).toMatch(/unknown/);
-	});
-
-	test('allows any other branch', () => {
-		expect(baselineGuardReason('feature', 'main')).toBe('');
 	});
 });

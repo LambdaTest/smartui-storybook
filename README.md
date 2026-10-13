@@ -216,8 +216,6 @@ smartui storybook ./storybook-static --config .smartui.json --only-changed
 
 - A checkout with `fetch-depth: 1` is fine: the CLI fetches the parent commit with `git fetch --deepen=1`.
 
-- Builds on the project's baseline branch always capture every story, so the baseline stays complete.
-
 - Every story is captured, with the reason printed, when a changed file cannot be traced: for example a CSS file pulled in with `@import`, anything under `.storybook/`, `package.json`, or the SmartUI config file. Markdown, CI configuration and test files are ignored.
 
 - When no story is affected, no build is created and the CLI exits 0. `--fetch-results` then writes `"verdict": "skipped"`.
