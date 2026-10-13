@@ -232,6 +232,7 @@ function walkImporters(starts, importers) {
 
 // A module Storybook applies to every story (preview, previewAnnotations) is imported only by generated entries, which are not files on disk.
 // The walk stops at story files, so a component reached only through stories never counts.
+// Returns { module, start } for the first such module, start being the changed module that reaches it.
 function findGlobalModule(starts, importers, storyFiles, root) {
     const onDisk = new Map();
     const exists = function (name) {
@@ -239,16 +240,16 @@ function findGlobalModule(starts, importers, storyFiles, root) {
         return onDisk.get(name);
     };
     const seen = new Set(starts);
-    const queue = [...starts];
+    const queue = [...starts].map(start => [start, start]);
     while (queue.length) {
-        const current = queue.shift();
+        const [current, start] = queue.shift();
         if (storyFiles.has(current)) continue;
         const from = [...(importers.get(current) || [])];
-        if (exists(current) && !from.some(exists)) return current;
+        if (exists(current) && !from.some(exists)) return { module: current, start: start };
         for (const next of from) {
             if (!seen.has(next)) {
                 seen.add(next);
-                queue.push(next);
+                queue.push([next, start]);
             }
         }
     }
@@ -303,6 +304,8 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
     const importers = buildImporterGraph(stats);
 
     const starts = new Set();
+    // start module -> the changed file or package it came from, for the reason line
+    const origins = new Map();
     const changedFiles = [];
     for (const file of changes.files) {
         const rel = relToRoot(file);
@@ -319,24 +322,33 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
             const before = previous === null ? new Map() : parseLockfile(file, previous);
             const after = parseLockfile(file, fs.existsSync(path.join(changes.repoRoot, file)) ? fs.readFileSync(path.join(changes.repoRoot, file), 'utf-8') : null);
             if (!before || !after) return { reason: `${file} changed and could not be parsed` };
-            const names = changedPackages(before, after);
-            for (const module of importers.keys()) {
-                for (const name of names) {
-                    if (module.includes(`node_modules/${name}/`)) starts.add(module);
+            const modules = [...importers.keys()];
+            for (const name of changedPackages(before, after)) {
+                const packageModules = modules.filter(module => module.includes(`node_modules/${name}/`));
+                // build tooling (Vite, PostCSS, Babel, Tailwind) never appears in the graph but can change every story
+                if (packageModules.length === 0) {
+                    return { reason: `${name} changed in ${file} and is not in the Storybook dependency graph, so it may be build tooling` };
                 }
+                packageModules.forEach(module => {
+                    starts.add(module);
+                    if (!origins.has(module)) origins.set(module, `${name} (${file})`);
+                });
             }
             continue;
         }
         if (importers.has(rel) || storyFiles.has(rel)) {
             starts.add(rel);
+            origins.set(rel, file);
             continue;
         }
         if (ALLOWLIST.some(pattern => pattern.test(file))) continue;
         return { reason: `${file} is not in the Storybook dependency graph` };
     }
 
-    const globalModule = findGlobalModule(starts, importers, storyFiles, root);
-    if (globalModule) return { reason: `a changed file reaches ${globalModule}, which no story imports, so Storybook loads it for every story (a preview file or previewAnnotations)` };
+    const reached = findGlobalModule(starts, importers, storyFiles, root);
+    if (reached) {
+        return { reason: `${origins.get(reached.start) || reached.start} reaches ${reached.module}, which no story imports, so Storybook loads it for every story` };
+    }
 
     const affected = walkImporters(starts, importers);
 

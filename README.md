@@ -216,7 +216,7 @@ smartui storybook ./storybook-static --config .smartui.json --only-changed
 
 - A checkout with `fetch-depth: 1` is fine: the CLI fetches the parent commit with `git fetch --deepen=1`.
 
-- Every story is captured, with the reason printed, when a changed file cannot be traced: for example a CSS file pulled in with `@import` (Vite builds), anything under `.storybook/` or imported by a preview file, `package.json`, or the SmartUI config file. Markdown, CI configuration and test files are ignored.
+- Every story is captured, with the reason printed, when a changed file cannot be traced: for example a CSS file pulled in with `@import` (Vite builds), anything under `.storybook/` or imported by a preview file, `package.json`, the SmartUI config file, or a lockfile bump of a package that no story imports (build tooling such as Vite, PostCSS or Babel). Markdown, CI configuration and test files are ignored.
 
 - When no story is affected, no build is created and the CLI exits 0. `--fetch-results` then writes `"verdict": "skipped"`.
 

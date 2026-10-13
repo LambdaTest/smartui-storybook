@@ -96,7 +96,7 @@ describe('selectAffectedStories', () => {
 
 	test.each([
 		[{ 'src/tokens.css': '/* v2 */\n' }, /src\/tokens\.css is not in the Storybook dependency graph/],
-		[{ 'src/Theme.jsx': '// v2\n' }, /reaches \.storybook\/preview\.js, which no story imports/],
+		[{ 'src/Theme.jsx': '// v2\n' }, /^src\/Theme\.jsx reaches \.storybook\/preview\.js, which no story imports/],
 		[{ 'src/Decor.jsx': '// v2\n' }, /reaches config\/sb\/preview\.js/],
 		[{ 'src/annotations.js': '// v2\n' }, /reaches src\/annotations\.js/],
 		[{ '.storybook/main.js': '// v2\n' }, /Storybook configuration/],
@@ -116,8 +116,25 @@ describe('selectAffectedStories', () => {
 	test('a lockfile bump selects only stories that import the package', () => {
 		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.1', 'eslint': '8.0.0' }) });
 		expect(select(dir).storyIds).toEqual(['card--basic']);
-		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.1', 'eslint': '9.0.0' }) });
-		expect(select(dir).storyIds).toEqual([]);
+	});
+
+	test('a bumped package outside the graph captures everything', () => {
+		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.0', 'eslint': '9.0.0' }) });
+		expect(select(dir).reason).toMatch(/^eslint changed in package-lock\.json and is not in the Storybook dependency graph/);
+	});
+
+	test('a bumped package that only Storybook\'s entry loads captures everything', () => {
+		const stats = JSON.parse(fs.readFileSync(path.join(dir, 'storybook-static/preview-stats.json')));
+		stats.modules.push(
+			{ name: './node_modules/renderer/index.js', reasons: [{ moduleName: './node_modules/fw/entry-preview.mjs' }] },
+			{ name: './node_modules/fw/entry-preview.mjs', reasons: [{ moduleName: '/virtual:/@storybook/builder-vite/vite-app.js' }] }
+		);
+		write(dir, 'storybook-static/preview-stats.json', JSON.stringify(stats));
+		['node_modules/renderer/index.js', 'node_modules/fw/entry-preview.mjs'].forEach(file => write(dir, file, '// pkg\n'));
+		write(dir, 'package-lock.json', LOCK({ 'left-pad': '1.0.0', 'eslint': '8.0.0', renderer: '1.0.0' }));
+		commitChange(dir, {});
+		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.0', 'eslint': '8.0.0', renderer: '1.1.0' }) });
+		expect(select(dir).reason).toMatch(/^renderer \(package-lock\.json\) reaches node_modules\/fw\/entry-preview\.mjs/);
 	});
 
 	test('a component used by a story the filter dropped affects nothing', () => {
@@ -168,6 +185,17 @@ describe('findGlobalModule', () => {
 	test('a module reached only through story files is not global', () => {
 		const importers = new Map([['a.js', new Set(['a.stories.js'])], ['a.stories.js', new Set(['/virtual:/stories.js'])]]);
 		expect(findGlobalModule(['a.js'], importers, new Set(['a.stories.js']), '/')).toBeNull();
+	});
+
+	test('names the changed module that reaches the global one', () => {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sb-only-changed-global-'));
+		try {
+			['preview.js', 'theme.js'].forEach(file => write(dir, file, '//\n'));
+			const importers = new Map([['theme.js', new Set(['preview.js'])], ['preview.js', new Set(['/virtual:/entry.js'])]]);
+			expect(findGlobalModule(['theme.js'], importers, new Set(), dir)).toEqual({ module: 'preview.js', start: 'theme.js' });
+		} finally {
+			fs.rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });
 
