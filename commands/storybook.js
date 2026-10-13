@@ -81,7 +81,8 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
                 key: credentials.key,
                 baseURL: toRenderBaseURL(baseURL)
             },
-            maxStories: storybookConfig.chunkSize || constants.URL_MODE_DEFAULT_CHUNK_SIZE
+            maxStories: storybookConfig.chunkSize || constants.URL_MODE_DEFAULT_CHUNK_SIZE,
+            onlyChanged: options.onlyChangedResult
         });
         // The tunnel is the data path of the build, so keep it open until the build is over:
         // wait far longer than for a static build and report loudly if we still give up.
@@ -146,7 +147,8 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
                 git,
                 buildName,
                 tunnel: options.tunnel || {},
-                maxStories
+                maxStories,
+                onlyChanged: options.onlyChangedResult
             });
 
             await requestRender(payload, options);
@@ -246,7 +248,7 @@ async function resolveGitInfo() {
 
 // Body of the /storybook/staticrender request. `screenshotNames` is only included when
 // given (URL mode), so a static build produces exactly the payload it always has.
-function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories }) {
+function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories, onlyChanged }) {
     let lazyLoadedStories = [];
     if (Array.isArray(storybookConfig.lazyLoadedStories) && storybookConfig.lazyLoadedStories.length > 0) {
         lazyLoadedStories = storybookConfig.lazyLoadedStories;
@@ -289,6 +291,10 @@ function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source
     };
     if (screenshotNames) {
         renderConfig.screenshotNames = screenshotNames;
+    }
+    // stored on the build so the dashboard can mark TurboSnap builds
+    if (onlyChanged) {
+        renderConfig.onlyChanged = onlyChanged;
     }
 
     return {

@@ -123,4 +123,11 @@ describe('render payload', () => {
 		expect(payload.storybookConfig.resolutions).toEqual([{ width: 360, height: 640 }]);
 		expect(payload.storybookConfig.lazyLoadedStories).toEqual(['x--y']);
 	});
+
+	test('--only-changed sends its summary in storybookConfig, and only then', () => {
+		const onlyChanged = { applied: true, captured: 2, total: 9, commit: 'abc1234', reason: '' };
+		const args = { storybookConfig: baseConfig, storyIds: ['a--b'], source: { downloadURL: '', uploadId: '' }, git, buildName: '', tunnel: {}, maxStories: 100 };
+		expect(buildRenderPayload({ ...args, onlyChanged }).storybookConfig.onlyChanged).toEqual(onlyChanged);
+		expect(Object.keys(buildRenderPayload(args).storybookConfig)).not.toContain('onlyChanged');
+	});
 });
