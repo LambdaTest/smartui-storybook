@@ -3,7 +3,7 @@ const os = require('os');
 const path = require('path');
 const cp = require('child_process');
 const {
-	selectAffectedStories, getChangedFiles, parsePorcelain, parsePackageLock, parseYarnLock,
+	selectAffectedStories, getChangedFiles, findGlobalModule, parsePorcelain, parsePackageLock, parseYarnLock,
 	parsePnpmLock, changedPackages, normalizeModuleName, buildImporterGraph, walkImporters
 } = require('./../commands/utils/changed');
 
@@ -19,13 +19,20 @@ const STATS = {
 		{ name: './src/shared.js', reasons: [{ moduleName: './src/Button.jsx' }, { moduleName: './src/Card.jsx' }] },
 		{ name: './src/Theme.jsx', reasons: [{ moduleName: './.storybook/preview.js' }] },
 		{ name: './node_modules/left-pad/index.js', reasons: [{ moduleName: './src/Card.jsx' }] },
+		{ name: './config/sb/preview.js', reasons: [{ moduleName: '/virtual:/@storybook/builder-vite/vite-app.js' }] },
+		{ name: './src/Decor.jsx', reasons: [{ moduleName: './config/sb/preview.js' }] },
+		{ name: './src/annotations.js', reasons: [{ moduleName: '/virtual:/@storybook/builder-vite/vite-app.js' }] },
+		{ name: './src/Intro.mdx', reasons: [{ moduleName: '/virtual:/@storybook/builder-vite/storybook-stories.js' }] },
+		{ name: './src/Callout.jsx', reasons: [{ moduleName: './src/Intro.mdx' }] },
 	]
 };
 const STORIES = {
 	'button--primary': { importPath: './src/Button.stories.jsx' },
 	'button--secondary': { importPath: './src/Button.stories.jsx' },
 	'card--basic': { importPath: './src/Card.stories.jsx' },
+	'intro--docs': { importPath: './src/Intro.mdx', type: 'docs' },
 };
+const STORY_IDS = ['button--primary', 'button--secondary', 'card--basic'];
 const LOCK = versions => JSON.stringify({
 	lockfileVersion: 3,
 	packages: Object.fromEntries([['', { name: 'app' }], ...Object.entries(versions).map(([n, v]) => [`node_modules/${n}`, { version: v }])])
@@ -41,7 +48,8 @@ const write = (dir, file, text) => {
 // a repository with one base commit; each test commits its own change on top
 function fixtureRepo() {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sb-only-changed-'));
-	['src/Button.stories.jsx', 'src/Card.stories.jsx', 'src/Button.jsx', 'src/Card.jsx', 'src/button.css', 'src/shared.js', 'src/Theme.jsx', '.storybook/preview.js', 'src/tokens.css', 'README.md']
+	['src/Button.stories.jsx', 'src/Card.stories.jsx', 'src/Button.jsx', 'src/Card.jsx', 'src/button.css', 'src/shared.js', 'src/Theme.jsx', '.storybook/preview.js', 'src/tokens.css', 'README.md',
+		'config/sb/preview.js', 'src/Decor.jsx', 'src/annotations.js', 'src/Intro.mdx', 'src/Callout.jsx']
 		.forEach(file => write(dir, file, '// v1\n'));
 	write(dir, 'package.json', '{}\n');
 	write(dir, 'package-lock.json', LOCK({ 'left-pad': '1.0.0', 'eslint': '8.0.0' }));
@@ -59,7 +67,7 @@ function commitChange(dir, changes) {
 	git(dir, 'commit', '-qm', 'change');
 }
 
-const select = (dir, extra = {}) => selectAffectedStories({ dirPath: path.join(dir, 'storybook-static'), stories: STORIES, storyIds: Object.keys(STORIES), cwd: dir, ...extra });
+const select = (dir, extra = {}) => selectAffectedStories({ dirPath: path.join(dir, 'storybook-static'), stories: STORIES, storyIds: STORY_IDS, cwd: dir, ...extra });
 
 describe('selectAffectedStories', () => {
 	let dir;
@@ -88,7 +96,9 @@ describe('selectAffectedStories', () => {
 
 	test.each([
 		[{ 'src/tokens.css': '/* v2 */\n' }, /src\/tokens\.css is not in the Storybook dependency graph/],
-		[{ 'src/Theme.jsx': '// v2\n' }, /imported by \.storybook\/preview\.js/],
+		[{ 'src/Theme.jsx': '// v2\n' }, /reaches \.storybook\/preview\.js, which no story imports/],
+		[{ 'src/Decor.jsx': '// v2\n' }, /reaches config\/sb\/preview\.js/],
+		[{ 'src/annotations.js': '// v2\n' }, /reaches src\/annotations\.js/],
 		[{ '.storybook/main.js': '// v2\n' }, /Storybook configuration/],
 		[{ 'package.json': '{"a":1}\n' }, /package\.json changed/],
 		[{ 'package-lock.json': '{ not json' }, /could not be parsed/],
@@ -107,6 +117,16 @@ describe('selectAffectedStories', () => {
 		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.1', 'eslint': '8.0.0' }) });
 		expect(select(dir).storyIds).toEqual(['card--basic']);
 		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.1', 'eslint': '9.0.0' }) });
+		expect(select(dir).storyIds).toEqual([]);
+	});
+
+	test('a component used by a story the filter dropped affects nothing', () => {
+		commitChange(dir, { 'src/Card.jsx': '// v2\n' });
+		expect(select(dir, { storyIds: ['button--primary', 'button--secondary'] }).storyIds).toEqual([]);
+	});
+
+	test('a component used only in MDX docs affects no captured story', () => {
+		commitChange(dir, { 'src/Callout.jsx': '// v2\n' });
 		expect(select(dir).storyIds).toEqual([]);
 	});
 
@@ -144,6 +164,13 @@ describe('selectAffectedStories', () => {
 	});
 });
 
+describe('findGlobalModule', () => {
+	test('a module reached only through story files is not global', () => {
+		const importers = new Map([['a.js', new Set(['a.stories.js'])], ['a.stories.js', new Set(['/virtual:/stories.js'])]]);
+		expect(findGlobalModule(['a.js'], importers, new Set(['a.stories.js']), '/')).toBeNull();
+	});
+});
+
 describe('getChangedFiles', () => {
 	test('outside a git repository', () => {
 		expect(getChangedFiles('/', () => null).reason).toMatch(/not a git repository/);
@@ -158,6 +185,20 @@ describe('getChangedFiles', () => {
 			return '';
 		};
 		expect(getChangedFiles('/repo', run).reason).toMatch(/fetch-depth/);
+	});
+
+	test('the parent fetch cannot prompt for credentials and has a timeout', () => {
+		jest.spyOn(console, 'log').mockImplementation(() => {});
+		let fetchOptions;
+		const run = (args, cwd, options) => {
+			if (args[0] === 'fetch') fetchOptions = options;
+			if (args[1] === '--show-toplevel') return '/repo\n';
+			if (args[1] === '--is-shallow-repository') return 'true\n';
+			return args[0] === 'rev-parse' ? null : '';
+		};
+		getChangedFiles('/repo', run);
+		expect(fetchOptions.timeout).toBeGreaterThan(0);
+		expect(fetchOptions.env.GIT_TERMINAL_PROMPT).toBe('0');
 	});
 });
 

@@ -17,16 +17,17 @@ const ALLOWLIST = [
     /(^|\/)__tests__\//
 ];
 
-const PREVIEW_PATTERN = /^\.storybook\/preview\.[^/]+$/;
+const FETCH_TIMEOUT_MS = 60 * 1000;
 
 // null when git fails or is missing, so callers can tell a failure from empty output
-function runGit(args, cwd) {
+function runGit(args, cwd, options = {}) {
     try {
         return cp.execFileSync('git', args, {
             cwd: cwd,
             stdio: ['ignore', 'pipe', 'ignore'],
             encoding: 'utf-8',
-            maxBuffer: 256 * 1024 * 1024
+            maxBuffer: 256 * 1024 * 1024,
+            ...options
         });
     } catch (error) {
         return null;
@@ -71,7 +72,8 @@ function getChangedFiles(cwd, run = runGit) {
             return { reason: 'the last commit has no parent commit to diff against' };
         }
         console.log('[smartui] --only-changed: shallow clone, fetching the parent commit (git fetch --deepen=1)');
-        run(['fetch', '--deepen=1', '--quiet'], cwd);
+        // git asks for credentials on the terminal, not stdin, so a private remote could hang the run without these
+        run(['fetch', '--deepen=1', '--quiet'], cwd, { timeout: FETCH_TIMEOUT_MS, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
         if (!hasParent()) {
             return { reason: 'could not fetch the parent of the last commit in this shallow clone. Use fetch-depth: 2 or more in the CI checkout' };
         }
@@ -228,6 +230,31 @@ function walkImporters(starts, importers) {
     return seen;
 }
 
+// A module Storybook applies to every story (preview, previewAnnotations) is imported only by generated entries, which are not files on disk.
+// The walk stops at story files, so a component reached only through stories never counts.
+function findGlobalModule(starts, importers, storyFiles, root) {
+    const onDisk = new Map();
+    const exists = function (name) {
+        if (!onDisk.has(name)) onDisk.set(name, fs.existsSync(path.join(root, name)));
+        return onDisk.get(name);
+    };
+    const seen = new Set(starts);
+    const queue = [...starts];
+    while (queue.length) {
+        const current = queue.shift();
+        if (storyFiles.has(current)) continue;
+        const from = [...(importers.get(current) || [])];
+        if (exists(current) && !from.some(exists)) return current;
+        for (const next of from) {
+            if (!seen.has(next)) {
+                seen.add(next);
+                queue.push(next);
+            }
+        }
+    }
+    return null;
+}
+
 function readJson(file) {
     try {
         return JSON.parse(fs.readFileSync(file));
@@ -263,7 +290,8 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
         }
         importPaths.set(id, importPath);
     }
-    const storyFiles = new Set(importPaths.values());
+    // every indexed file, including stories the include/exclude filter dropped and MDX docs, is a story file for the walk
+    const storyFiles = new Set(Object.values(stories || {}).map(entry => normalizeModuleName(entry && entry.importPath)).filter(Boolean));
 
     const changes = getChangedFiles(cwd, run);
     if (changes.reason) return { reason: changes.reason };
@@ -307,9 +335,10 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
         return { reason: `${file} is not in the Storybook dependency graph` };
     }
 
+    const globalModule = findGlobalModule(starts, importers, storyFiles, root);
+    if (globalModule) return { reason: `a changed file reaches ${globalModule}, which no story imports, so Storybook loads it for every story (a preview file or previewAnnotations)` };
+
     const affected = walkImporters(starts, importers);
-    const preview = [...affected].find(module => PREVIEW_PATTERN.test(module));
-    if (preview) return { reason: `a changed file is imported by ${preview}` };
 
     return {
         storyIds: storyIds.filter(id => affected.has(importPaths.get(id))),
@@ -328,5 +357,6 @@ module.exports = {
     normalizeModuleName,
     buildImporterGraph,
     walkImporters,
+    findGlobalModule,
     STATS_FILE
 };

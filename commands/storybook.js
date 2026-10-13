@@ -50,6 +50,9 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
 
     const { storyIds, screenshotNames } = await staticBuild.fetchStoriesFromUrl(baseURL, storybookConfig);
     const git = await resolveGitInfo();
+    if (isOnlyChanged(options, storybookConfig)) {
+        options.onlyChangedResult = { applied: false, captured: storyIds.length, total: storyIds.length, commit: git.commitId, reason: 'a Storybook URL has no preview-stats.json' };
+    }
 
     let tunnel;
     try {
