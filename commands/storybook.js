@@ -148,7 +148,8 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
                 buildName,
                 tunnel: options.tunnel || {},
                 maxStories,
-                onlyChanged: options.onlyChangedResult
+                onlyChanged: options.onlyChangedResult,
+                carryForward: options.carryForward
             });
 
             await requestRender(payload, options);
@@ -191,6 +192,8 @@ async function selectChangedStories(dirPath, storyIds, options) {
 
     result.applied = true;
     result.captured = selection.storyIds.length;
+    const selected = new Set(selection.storyIds);
+    options.carryForward = storyIds.filter(id => !selected.has(id));
     if (selection.storyIds.length === 0) {
         console.log(`[smartui] --only-changed: no stories affected by ${commit.shortHash}`);
     } else {
@@ -248,7 +251,7 @@ async function resolveGitInfo() {
 
 // Body of the /storybook/staticrender request. `screenshotNames` is only included when
 // given (URL mode), so a static build produces exactly the payload it always has.
-function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories, onlyChanged }) {
+function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories, onlyChanged, carryForward }) {
     let lazyLoadedStories = [];
     if (Array.isArray(storybookConfig.lazyLoadedStories) && storybookConfig.lazyLoadedStories.length > 0) {
         lazyLoadedStories = storybookConfig.lazyLoadedStories;
@@ -295,6 +298,10 @@ function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source
     // stored on the build so the dashboard can mark TurboSnap builds
     if (onlyChanged) {
         renderConfig.onlyChanged = onlyChanged;
+    }
+    // the server copies these stories' baseline screenshots into the build
+    if (carryForward && carryForward.length) {
+        renderConfig.carryForward = carryForward;
     }
 
     return {

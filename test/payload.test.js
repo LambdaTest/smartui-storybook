@@ -130,4 +130,11 @@ describe('render payload', () => {
 		expect(buildRenderPayload({ ...args, onlyChanged }).storybookConfig.onlyChanged).toEqual(onlyChanged);
 		expect(Object.keys(buildRenderPayload(args).storybookConfig)).not.toContain('onlyChanged');
 	});
+
+	test('--only-changed sends the skipped stories to carry forward, and only when there are some', () => {
+		const args = { storybookConfig: baseConfig, storyIds: ['a--b'], source: { downloadURL: '', uploadId: '' }, git, buildName: '', tunnel: {}, maxStories: 100 };
+		expect(buildRenderPayload({ ...args, carryForward: ['c--d', 'e--f'] }).storybookConfig.carryForward).toEqual(['c--d', 'e--f']);
+		expect(Object.keys(buildRenderPayload({ ...args, carryForward: [] }).storybookConfig)).not.toContain('carryForward');
+		expect(Object.keys(buildRenderPayload(args).storybookConfig)).not.toContain('carryForward');
+	});
 });
