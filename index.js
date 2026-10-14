@@ -78,6 +78,10 @@ program.command('storybook')
         try {
             options.failOn = resolveFailOn(options.failOn, process.env.SMARTUI_FAIL_ON, options.config && options.config.failOn);
             options.resultsFile = resolveResultsFile(options.fetchResults);
+            // a reused build name renders into the existing build, which carry-forward does not handle yet
+            if (options.buildName && (options.onlyChanged || (options.config && options.config.onlyChanged === true))) {
+                throw new Error('--buildName is not supported with --only-changed (or storybook.onlyChanged in the config). Remove one of them.');
+            }
         } catch (error) {
             console.log(`[smartui] Error: ${error.message}`);
             process.exit(constants.ERROR_USAGE);
