@@ -1,7 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { resolveFailOn, resolveResultsFile, summarise, policyFails, finishRun } = require('./../commands/utils/results');
+const { resolveFailOn, resolveResultsFile, summarise, policyFails, finishRun, finishSkippedRun } = require('./../commands/utils/results');
 
 const shot = (status, name = 'Button--primary') => ({ storyName: name, browser: 'chrome', resolution: '1920x1080', status, mismatchPercentage: status === 'Approved' ? 0 : 1.5 });
 
@@ -101,5 +101,22 @@ describe('finishRun', () => {
 		process.exitCode = 1;
 		finishRun('timeout', undefined, 'id-1', { failOn: 'unreviewed' });
 		expect(process.exitCode).toBe(1);
+	});
+	test('--only-changed adds its summary to the results file', () => {
+		const file = path.join(dir, 'r.json');
+		const onlyChanged = { applied: true, captured: 2, total: 9, commit: 'a1b2c3d', reason: '' };
+		finishRun('completed', completed, 'id-1', { failOn: 'none', resultsFile: file, onlyChangedResult: onlyChanged });
+		expect(JSON.parse(fs.readFileSync(file, 'utf8')).onlyChanged).toEqual(onlyChanged);
+	});
+
+	test('a skipped run passes and writes verdict skipped', () => {
+		const file = path.join(dir, 'r.json');
+		const onlyChanged = { applied: true, captured: 0, total: 9, commit: 'a1b2c3d', reason: '' };
+		finishSkippedRun({ failOn: 'unreviewed', resultsFile: file, onlyChangedResult: onlyChanged });
+		expect(process.exitCode).toBeUndefined();
+		const out = JSON.parse(fs.readFileSync(file, 'utf8'));
+		expect(out.verdict).toBe('skipped');
+		expect(out.buildId).toBe('');
+		expect(out.onlyChanged).toEqual(onlyChanged);
 	});
 });

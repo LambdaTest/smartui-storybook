@@ -48,6 +48,7 @@ program.command('storybook')
     .option('--accessKey <string>', 'LambdaTest access key, used to start the tunnel for a Storybook URL. Defaults to LT_ACCESS_KEY')
     .option('--fetch-results [filename]', 'Write the build results to a JSON file once the build completes (default results.json)')
     .option('--fail-on [policy]', `Exit 4 when the visual check fails: ${FAIL_ON_POLICIES.join('|')}. No value means unreviewed. Also SMARTUI_FAIL_ON or config failOn`)
+    .option('--only-changed', 'Capture only the stories affected by the last commit (static build with preview-stats.json). Also config storybook.onlyChanged', false)
     .action(async function(serve, options) {
         options.env = program.opts().env || 'prod';
         
@@ -71,11 +72,16 @@ program.command('storybook')
             options.tunnel = validateTunnel(options.config);
         }
         if (options.config) {
+            options.configFile = options.config;
             options.config = validateConfig(options.config);
         }
         try {
             options.failOn = resolveFailOn(options.failOn, process.env.SMARTUI_FAIL_ON, options.config && options.config.failOn);
             options.resultsFile = resolveResultsFile(options.fetchResults);
+            // a reused build name renders into the existing build, which carry-forward does not handle yet
+            if (options.buildName && (options.onlyChanged || (options.config && options.config.onlyChanged === true))) {
+                throw new Error('--buildName is not supported with --only-changed (or storybook.onlyChanged in the config). Remove one of them.');
+            }
         } catch (error) {
             console.log(`[smartui] Error: ${error.message}`);
             process.exit(constants.ERROR_USAGE);

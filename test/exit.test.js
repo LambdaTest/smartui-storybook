@@ -34,6 +34,19 @@ describe('usage errors exit 2', () => {
 		expect(res.stdout).toContain('[smartui] Exit code 2: usage error');
 	});
 
+	test('--buildName is rejected with --only-changed, from the flag or the config', () => {
+		const fs = require('fs');
+		const os = require('os');
+		const config = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sb-')), '.smartui.json');
+		fs.writeFileSync(config, JSON.stringify({ storybook: { browsers: ['chrome'], viewports: [[1280, 800]], onlyChanged: true } }));
+		for (const args of [['storybook', './x', '--buildName', 'b', '--only-changed'], ['storybook', './x', '--buildName', 'b', '--config', config]]) {
+			const res = run(...args);
+			expect(res.status).toBe(constants.ERROR_USAGE);
+			expect(res.stdout).toContain('--buildName is not supported with --only-changed');
+			expect(res.stdout).toContain('[smartui] Exit code 2: usage error');
+		}
+	});
+
 	test('help and version still exit 0 with no hint', () => {
 		for (const args of [['--help'], ['--version'], ['storybook', '--help']]) {
 			const res = run(...args);
