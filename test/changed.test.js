@@ -67,7 +67,13 @@ function commitChange(dir, changes) {
 	git(dir, 'commit', '-qm', 'change');
 }
 
-const select = (dir, extra = {}) => selectAffectedStories({ dirPath: path.join(dir, 'storybook-static'), stories: STORIES, storyIds: STORY_IDS, cwd: dir, ...extra });
+// the fixture's base commit plays the approved baseline build
+const baselineOf = dir => ({
+	buildId: 'baseline-build',
+	commitId: git(dir, 'rev-list', '--max-parents=0', '--abbrev-commit', 'HEAD').toString().trim(),
+	branch: git(dir, 'rev-parse', '--abbrev-ref', 'HEAD').toString().trim()
+});
+const select = (dir, extra = {}) => selectAffectedStories({ dirPath: path.join(dir, 'storybook-static'), stories: STORIES, storyIds: STORY_IDS, cwd: dir, baseline: baselineOf(dir), ...extra });
 
 describe('selectAffectedStories', () => {
 	let dir;
@@ -133,8 +139,9 @@ describe('selectAffectedStories', () => {
 		['node_modules/renderer/index.js', 'node_modules/fw/entry-preview.mjs'].forEach(file => write(dir, file, '// pkg\n'));
 		write(dir, 'package-lock.json', LOCK({ 'left-pad': '1.0.0', 'eslint': '8.0.0', renderer: '1.0.0' }));
 		commitChange(dir, {});
+		const baseline = { ...baselineOf(dir), commitId: git(dir, 'rev-parse', '--short', 'HEAD').toString().trim() };
 		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.0', 'eslint': '8.0.0', renderer: '1.1.0' }) });
-		expect(select(dir).reason).toMatch(/^renderer \(package-lock\.json\) reaches node_modules\/fw\/entry-preview\.mjs/);
+		expect(select(dir, { baseline }).reason).toMatch(/^renderer \(package-lock\.json\) reaches node_modules\/fw\/entry-preview\.mjs/);
 	});
 
 	test('a component used by a story the filter dropped affects nothing', () => {
@@ -163,18 +170,37 @@ describe('selectAffectedStories', () => {
 		expect(select(dir, { stories: { 'button--primary': {} }, storyIds: ['button--primary'] }).reason).toMatch(/importPath/);
 	});
 
-	test('a root commit captures everything', () => {
-		expect(select(dir).reason).toMatch(/no parent commit/);
+	test('no baseline build captures everything', () => {
+		commitChange(dir, { 'src/Card.jsx': '// v2\n' });
+		expect(select(dir, { baseline: null }).reason).toMatch(/no approved baseline build/);
 	});
 
-	test('a shallow clone fetches the parent first', () => {
+	test('nothing changed since the baseline commit affects no story', () => {
+		expect(select(dir)).toEqual({ storyIds: [], changedFiles: [] });
+	});
+
+	test('every commit since the baseline counts, not only the last one', () => {
 		commitChange(dir, { 'src/Card.jsx': '// v2\n' });
+		commitChange(dir, { 'README.md': 'v2\n' });
+		expect(select(dir).storyIds).toEqual(['card--basic']);
+	});
+
+	test('a lockfile is compared with the baseline commit\'s version', () => {
+		commitChange(dir, { 'package-lock.json': LOCK({ 'left-pad': '1.0.1', 'eslint': '8.0.0' }) });
+		commitChange(dir, { 'README.md': 'v2\n' });
+		expect(select(dir).storyIds).toEqual(['card--basic']);
+	});
+
+	test('a shallow clone fetches the baseline commit first', () => {
+		const baseline = baselineOf(dir);
+		commitChange(dir, { 'src/Card.jsx': '// v2\n' });
+		commitChange(dir, { 'README.md': 'v2\n' });
 		const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'sb-only-changed-clone-'));
 		try {
 			git(clone, 'clone', '-q', '--depth', '1', `file://${dir}`, '.');
 			write(clone, 'storybook-static/preview-stats.json', JSON.stringify(STATS));
 			jest.spyOn(console, 'log').mockImplementation(() => {});
-			expect(select(clone).storyIds).toEqual(['card--basic']);
+			expect(select(clone, { baseline }).storyIds).toEqual(['card--basic']);
 		} finally {
 			fs.rmSync(clone, { recursive: true, force: true });
 		}
@@ -200,11 +226,13 @@ describe('findGlobalModule', () => {
 });
 
 describe('getChangedFiles', () => {
+	const BASELINE = { buildId: 'b1', commitId: 'abc1234', branch: 'main' };
+
 	test('outside a git repository', () => {
-		expect(getChangedFiles('/', () => null).reason).toMatch(/not a git repository/);
+		expect(getChangedFiles('/', BASELINE, () => null).reason).toMatch(/not a git repository/);
 	});
 
-	test('a shallow clone whose parent cannot be fetched', () => {
+	test('a baseline commit that cannot be fetched', () => {
 		jest.spyOn(console, 'log').mockImplementation(() => {});
 		const run = args => {
 			if (args[0] === 'rev-parse' && args[1] === '--show-toplevel') return '/repo\n';
@@ -212,21 +240,24 @@ describe('getChangedFiles', () => {
 			if (args[0] === 'rev-parse') return null;
 			return '';
 		};
-		expect(getChangedFiles('/repo', run).reason).toMatch(/fetch-depth/);
+		expect(getChangedFiles('/repo', BASELINE, run).reason).toMatch(/abc1234 is not in this clone\. Use fetch-depth: 0/);
 	});
 
-	test('the parent fetch cannot prompt for credentials and has a timeout', () => {
+	test('the baseline fetch cannot prompt for credentials, has a timeout and stays shallow only in a shallow clone', () => {
 		jest.spyOn(console, 'log').mockImplementation(() => {});
-		let fetchOptions;
-		const run = (args, cwd, options) => {
-			if (args[0] === 'fetch') fetchOptions = options;
+		const fetches = [];
+		const runWith = shallow => (args, cwd, options) => {
+			if (args[0] === 'fetch') fetches.push({ args, options });
 			if (args[1] === '--show-toplevel') return '/repo\n';
-			if (args[1] === '--is-shallow-repository') return 'true\n';
+			if (args[1] === '--is-shallow-repository') return `${shallow}\n`;
 			return args[0] === 'rev-parse' ? null : '';
 		};
-		getChangedFiles('/repo', run);
-		expect(fetchOptions.timeout).toBeGreaterThan(0);
-		expect(fetchOptions.env.GIT_TERMINAL_PROMPT).toBe('0');
+		getChangedFiles('/repo', BASELINE, runWith(true));
+		getChangedFiles('/repo', BASELINE, runWith(false));
+		expect(fetches[0].options.timeout).toBeGreaterThan(0);
+		expect(fetches[0].options.env.GIT_TERMINAL_PROMPT).toBe('0');
+		expect(fetches[0].args).toEqual(expect.arrayContaining(['--depth=500', 'origin', 'main']));
+		expect(fetches[1].args.some(arg => arg.startsWith('--depth'))).toBe(false);
 	});
 });
 

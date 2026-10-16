@@ -124,7 +124,7 @@ function finishRun(reason, statusData, buildId, options) {
     }
 }
 
-// --only-changed found nothing to capture, so no build was created and the run passes
+// --only-changed had no story to capture or carry, so no build was created and the run passes
 function finishSkippedRun(options) {
     if (!options.resultsFile) return;
     const results = {

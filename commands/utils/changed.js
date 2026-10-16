@@ -18,6 +18,7 @@ const ALLOWLIST = [
 ];
 
 const FETCH_TIMEOUT_MS = 60 * 1000;
+const BASELINE_FETCH_DEPTH = 500;
 
 // null when git fails or is missing, so callers can tell a failure from empty output
 function runGit(args, cwd, options = {}) {
@@ -57,35 +58,39 @@ function parsePorcelain(output) {
     return files.filter(Boolean);
 }
 
-// Files changed by the last commit (HEAD~1..HEAD) plus uncommitted tracked changes, relative to the repository root.
-function getChangedFiles(cwd, run = runGit) {
+// Files changed between the baseline build's commit ({ commitId, branch }) and HEAD, plus uncommitted tracked changes, relative to the repository root.
+function getChangedFiles(cwd, baseline, run = runGit) {
     const top = run(['rev-parse', '--show-toplevel'], cwd);
     if (top === null) {
         return { reason: 'not a git repository, or git is not installed' };
     }
     const repoRoot = top.trim();
-    const hasParent = () => run(['rev-parse', '--verify', '--quiet', 'HEAD~1^{commit}'], cwd) !== null;
+    if (!baseline || !baseline.commitId) {
+        return { reason: 'the project has no approved baseline build to compare against' };
+    }
+    const resolve = () => (run(['rev-parse', '--verify', '--quiet', `${baseline.commitId}^{commit}`], cwd) || '').trim() || null;
 
-    if (!hasParent()) {
+    let base = resolve();
+    if (!base && baseline.branch) {
+        // --depth would turn a full clone shallow, so only a clone that already is one gets it
         const shallow = (run(['rev-parse', '--is-shallow-repository'], cwd) || '').trim() === 'true';
-        if (!shallow) {
-            return { reason: 'the last commit has no parent commit to diff against' };
-        }
-        console.log('[smartui] --only-changed: shallow clone, fetching the parent commit (git fetch --deepen=1)');
+        const args = ['fetch', '--quiet', '--no-tags', ...(shallow ? [`--depth=${BASELINE_FETCH_DEPTH}`] : []), 'origin', baseline.branch];
+        console.log(`[smartui] --only-changed: fetching the baseline commit ${baseline.commitId} (git ${args.join(' ')})`);
         // git asks for credentials on the terminal, not stdin, so a private remote could hang the run without these
-        run(['fetch', '--deepen=1', '--quiet'], cwd, { timeout: FETCH_TIMEOUT_MS, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
-        if (!hasParent()) {
-            return { reason: 'could not fetch the parent of the last commit in this shallow clone. Use fetch-depth: 2 or more in the CI checkout' };
-        }
+        run(args, cwd, { timeout: FETCH_TIMEOUT_MS, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+        base = resolve();
+    }
+    if (!base) {
+        return { reason: `the baseline build's commit ${baseline.commitId} is not in this clone. Use fetch-depth: 0 in the CI checkout` };
     }
 
-    const diff = run(['diff', '--name-only', '-z', 'HEAD~1', 'HEAD'], cwd);
+    const diff = run(['diff', '--name-only', '-z', base, 'HEAD'], cwd);
     if (diff === null) {
-        return { reason: 'git diff HEAD~1 HEAD failed' };
+        return { reason: `git diff ${baseline.commitId} HEAD failed` };
     }
     const status = run(['status', '--porcelain', '-z', '--untracked-files=no'], cwd);
     const files = new Set([...splitNul(diff), ...parsePorcelain(status)]);
-    return { repoRoot, files: [...files] };
+    return { repoRoot, base, files: [...files] };
 }
 
 function addVersion(map, name, version) {
@@ -272,8 +277,8 @@ function realpath(p) {
     }
 }
 
-// Decides which of storyIds the last commit can affect. Returns { storyIds, changedFiles } or { reason } when every story must be captured.
-function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = process.cwd(), run = runGit }) {
+// Decides which of storyIds the changes since the baseline build's commit can affect. Returns { storyIds, changedFiles } or { reason } when every story must be captured.
+function selectAffectedStories({ dirPath, stories, storyIds, configFile, baseline, cwd = process.cwd(), run = runGit }) {
     const statsFile = path.join(dirPath, STATS_FILE);
     if (!fs.existsSync(statsFile)) {
         return { reason: `${STATS_FILE} not found in ${dirPath}. Build Storybook with --stats-json (Storybook 7+) or --webpack-stats-json (6.4 to 6.5)` };
@@ -294,7 +299,7 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
     // every indexed file, including stories the include/exclude filter dropped and MDX docs, is a story file for the walk
     const storyFiles = new Set(Object.values(stories || {}).map(entry => normalizeModuleName(entry && entry.importPath)).filter(Boolean));
 
-    const changes = getChangedFiles(cwd, run);
+    const changes = getChangedFiles(cwd, baseline, run);
     if (changes.reason) return { reason: changes.reason };
 
     const root = realpath(cwd);
@@ -318,7 +323,7 @@ function selectAffectedStories({ dirPath, stories, storyIds, configFile, cwd = p
         if (rel.startsWith('.storybook/')) return { reason: `${file} is Storybook configuration` };
         if (base === 'package.json') return { reason: `${file} changed` };
         if (LOCKFILES.includes(base)) {
-            const previous = run(['show', `HEAD~1:${file}`], cwd);
+            const previous = run(['show', `${changes.base}:${file}`], cwd);
             const before = previous === null ? new Map() : parseLockfile(file, previous);
             const after = parseLockfile(file, fs.existsSync(path.join(changes.repoRoot, file)) ? fs.readFileSync(path.join(changes.repoRoot, file), 'utf-8') : null);
             if (!before || !after) return { reason: `${file} changed and could not be parsed` };

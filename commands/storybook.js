@@ -1,6 +1,6 @@
 const { httpClient } = require('./utils/httpClient')
 const fs = require('fs')
-const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl } = require('./utils/validate')
+const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl, fetchBaselineBuild } = require('./utils/validate')
 const { defaultSmartUIConfig } = require('./utils/config')
 const { getLastCommit } = require('./utils/git')
 const staticBuild = require('./utils/static')
@@ -100,7 +100,8 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
 
     if (isOnlyChanged(options, storybookConfig)) {
         storyIds = await selectChangedStories(dirPath, storyIds, options);
-        if (storyIds.length === 0) {
+        // with no story affected the build is still created, every story carried, so the commit gets a SmartUI status
+        if (storyIds.length === 0 && !(options.carryForward || []).length) {
             finishSkippedRun(options);
             return;
         }
@@ -168,7 +169,7 @@ function isOnlyChanged(options, storybookConfig) {
     return Boolean(options.onlyChanged) || storybookConfig.onlyChanged === true;
 }
 
-// --only-changed: the story ids the last commit can affect, or every id with the reason printed
+// --only-changed: the story ids the changes since the baseline build's commit can affect, or every id with the reason printed
 async function selectChangedStories(dirPath, storyIds, options) {
     const total = storyIds.length;
     const commit = await getLastCommit();
@@ -182,22 +183,26 @@ async function selectChangedStories(dirPath, storyIds, options) {
 
     if (!commit.shortHash) return captureAll('not a git repository, or git is not installed');
 
+    const baseline = await fetchBaselineBuild(options, commit);
     const selection = selectAffectedStories({
         dirPath,
         stories: staticBuild.readStoryIndex(dirPath),
         storyIds,
-        configFile: options.configFile
+        configFile: options.configFile,
+        baseline
     });
     if (selection.reason) return captureAll(selection.reason);
 
     result.applied = true;
     result.captured = selection.storyIds.length;
+    result.baselineBuildId = baseline.buildId;
     const selected = new Set(selection.storyIds);
     options.carryForward = storyIds.filter(id => !selected.has(id));
+    const range = `${baseline.commitId}..${commit.shortHash}`;
     if (selection.storyIds.length === 0) {
-        console.log(`[smartui] --only-changed: no stories affected by ${commit.shortHash}`);
+        console.log(`[smartui] --only-changed: no stories affected by ${range}, carrying all ${total} forward`);
     } else {
-        console.log(`[smartui] --only-changed: ${selection.storyIds.length} of ${total} stories affected by ${commit.shortHash} (${selection.changedFiles.length} changed files)`);
+        console.log(`[smartui] --only-changed: ${selection.storyIds.length} of ${total} stories affected by ${range} (${selection.changedFiles.length} changed files)`);
     }
     selection.changedFiles.forEach(file => console.log(`[smartui]   ${file}`));
     return selection.storyIds;

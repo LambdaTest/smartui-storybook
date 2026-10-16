@@ -196,7 +196,7 @@ You can always provide a path to the `storybook-static` directory instead of the
 
 
 
-With a static build, `--only-changed` (or `"onlyChanged": true` in the `storybook` block of the config file) captures only the stories that the last commit can affect. The CLI diffs `HEAD~1..HEAD`, follows Storybook's module graph from each changed file to the story files that import it, and renders only those stories.
+With a static build, `--only-changed` (or `"onlyChanged": true` in the `storybook` block of the config file) captures only the stories that changed since the build SmartUI compares against: the latest approved build on the project's baseline branch. The CLI diffs that build's commit against `HEAD` (plus uncommitted changes), follows Storybook's module graph from each changed file to the story files that import it, and renders only those stories. Every other story's screenshots are copied from that baseline build, so the build still has every story.
 
 
 
@@ -212,13 +212,13 @@ smartui storybook ./storybook-static --config .smartui.json --only-changed
 
 - Build Storybook with `--stats-json` (Storybook 7 and later) or `--webpack-stats-json` (Storybook 6.4 to 6.5), so that `preview-stats.json` is in the static build directory.
 
-- Run it on pull request builds. On GitHub Actions `pull_request` events the commit being built is the merge commit, so the diff covers the whole pull request. On a push of several commits only the last commit is diffed.
+- Every commit since the baseline build counts, so a pull request with several commits, or a push of several commits to the baseline branch, is fully covered.
 
-- A checkout with `fetch-depth: 1` is fine: the CLI fetches the parent commit with `git fetch --deepen=1`.
+- A shallow checkout is fine when the baseline commit is among the last 500 commits of the baseline branch: the CLI fetches it with `git fetch --depth=500 origin <baseline branch>`. Otherwise use `fetch-depth: 0`. When the project has no approved baseline build yet, or its commit cannot be fetched, every story is captured.
 
 - Every story is captured, with the reason printed, when a changed file cannot be traced: for example a CSS file pulled in with `@import` (Vite builds), anything under `.storybook/` or imported by a preview file, `package.json`, the SmartUI config file, or a lockfile bump of a package that no story imports (build tooling such as Vite, PostCSS or Babel). Markdown, CI configuration and test files are ignored.
 
-- When no story is affected, no build is created and the CLI exits 0. `--fetch-results` then writes `"verdict": "skipped"`.
+- When no story is affected, a build is still created with every story carried from the baseline build, so the commit gets its SmartUI status as usual.
 
 
 
