@@ -1,13 +1,14 @@
 const { httpClient } = require('./utils/httpClient')
 const fs = require('fs')
-const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl } = require('./utils/validate')
+const { validateStorybookUrl, validateStorybookDir, normalizeStorybookUrl, resolveTunnelCredentials, isStorybookUrl, fetchBaselineBuild } = require('./utils/validate')
 const { defaultSmartUIConfig } = require('./utils/config')
 const { getLastCommit } = require('./utils/git')
 const staticBuild = require('./utils/static')
 const { startTunnel, stopTunnel } = require('./utils/tunnel')
 var { constants } = require('./utils/constants');
 const { shortPolling } = require('./utils/polling');
-const { finishRun } = require('./utils/results');
+const { finishRun, finishSkippedRun } = require('./utils/results');
+const { selectAffectedStories } = require('./utils/changed');
 
 const TUNNEL_RENDER_ATTEMPTS = 3;
 const TUNNEL_RENDER_RETRY_DELAY_MS = 5000;
@@ -43,9 +44,15 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
         console.log('[smartui] Warning: the tunnel block in the config file is ignored for a Storybook URL; the CLI starts its own tunnel.');
     }
     const credentials = options.ltCredentials || resolveTunnelCredentials(options);
+    if (isOnlyChanged(options, storybookConfig)) {
+        console.log('[smartui] Warning: --only-changed needs a static build directory (it reads preview-stats.json); capturing every story of the Storybook URL.');
+    }
 
     const { storyIds, screenshotNames } = await staticBuild.fetchStoriesFromUrl(baseURL, storybookConfig);
     const git = await resolveGitInfo();
+    if (isOnlyChanged(options, storybookConfig)) {
+        options.onlyChangedResult = { applied: false, captured: storyIds.length, total: storyIds.length, commit: git.commitId, reason: 'a Storybook URL has no preview-stats.json' };
+    }
 
     let tunnel;
     try {
@@ -74,7 +81,8 @@ async function renderUrl(serve, storybookConfig, options, buildName) {
                 key: credentials.key,
                 baseURL: toRenderBaseURL(baseURL)
             },
-            maxStories: storybookConfig.chunkSize || constants.URL_MODE_DEFAULT_CHUNK_SIZE
+            maxStories: storybookConfig.chunkSize || constants.URL_MODE_DEFAULT_CHUNK_SIZE,
+            onlyChanged: options.onlyChangedResult
         });
         // The tunnel is the data path of the build, so keep it open until the build is over:
         // wait far longer than for a static build and report loudly if we still give up.
@@ -89,6 +97,15 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
     // Get storyIds to be rendered 
     let storyIds = staticBuild.filterStories(dirPath, storybookConfig)
     let maxStories = storybookConfig.chunkSize || 100;
+
+    if (isOnlyChanged(options, storybookConfig)) {
+        storyIds = await selectChangedStories(dirPath, storyIds, options);
+        // with no story affected the build is still created, every story carried, so the commit gets a SmartUI status
+        if (storyIds.length === 0 && !(options.carryForward || []).length) {
+            finishSkippedRun(options);
+            return;
+        }
+    }
 
     // Upload Storybook static
     await staticBuild.getSignedUrl(options)
@@ -131,7 +148,9 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
                 git,
                 buildName,
                 tunnel: options.tunnel || {},
-                maxStories
+                maxStories,
+                onlyChanged: options.onlyChangedResult,
+                carryForward: options.carryForward
             });
 
             await requestRender(payload, options);
@@ -145,6 +164,49 @@ async function renderStatic(dirPath, storybookConfig, options, buildName) {
             process.exitCode = constants.ERROR_CATCHALL;
         });
 };
+
+function isOnlyChanged(options, storybookConfig) {
+    return Boolean(options.onlyChanged) || storybookConfig.onlyChanged === true;
+}
+
+// --only-changed: the story ids the changes since the baseline build's commit can affect, or every id with the reason printed
+async function selectChangedStories(dirPath, storyIds, options) {
+    const total = storyIds.length;
+    const commit = await getLastCommit();
+    const result = { applied: false, captured: total, total: total, commit: commit.shortHash, reason: '' };
+    options.onlyChangedResult = result;
+    const captureAll = function (reason) {
+        result.reason = reason;
+        console.log(`[smartui] --only-changed: capturing all ${total} stories: ${reason}`);
+        return storyIds;
+    };
+
+    if (!commit.shortHash) return captureAll('not a git repository, or git is not installed');
+
+    const baseline = await fetchBaselineBuild(options, commit);
+    const selection = selectAffectedStories({
+        dirPath,
+        stories: staticBuild.readStoryIndex(dirPath),
+        storyIds,
+        configFile: options.configFile,
+        baseline
+    });
+    if (selection.reason) return captureAll(selection.reason);
+
+    result.applied = true;
+    result.captured = selection.storyIds.length;
+    result.baselineBuildId = baseline.buildId;
+    const selected = new Set(selection.storyIds);
+    options.carryForward = storyIds.filter(id => !selected.has(id));
+    const range = `${baseline.commitId}..${commit.shortHash}`;
+    if (selection.storyIds.length === 0) {
+        console.log(`[smartui] --only-changed: no stories affected by ${range}, carrying all ${total} forward`);
+    } else {
+        console.log(`[smartui] --only-changed: ${selection.storyIds.length} of ${total} stories affected by ${range} (${selection.changedFiles.length} changed files)`);
+    }
+    selection.changedFiles.forEach(file => console.log(`[smartui]   ${file}`));
+    return selection.storyIds;
+}
 
 // Storybook origin as the renderer expects it: a directory URL with a trailing slash, so
 // that the renderer's `new URL('iframe.html', baseURL)` keeps a sub-path like `/storybook/`.
@@ -194,7 +256,7 @@ async function resolveGitInfo() {
 
 // Body of the /storybook/staticrender request. `screenshotNames` is only included when
 // given (URL mode), so a static build produces exactly the payload it always has.
-function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories }) {
+function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source, git, buildName, tunnel, maxStories, onlyChanged, carryForward }) {
     let lazyLoadedStories = [];
     if (Array.isArray(storybookConfig.lazyLoadedStories) && storybookConfig.lazyLoadedStories.length > 0) {
         lazyLoadedStories = storybookConfig.lazyLoadedStories;
@@ -237,6 +299,14 @@ function buildRenderPayload({ storybookConfig, storyIds, screenshotNames, source
     };
     if (screenshotNames) {
         renderConfig.screenshotNames = screenshotNames;
+    }
+    // stored on the build so the dashboard can mark TurboSnap builds
+    if (onlyChanged) {
+        renderConfig.onlyChanged = onlyChanged;
+    }
+    // the server copies these stories' baseline screenshots into the build
+    if (carryForward && carryForward.length) {
+        renderConfig.carryForward = carryForward;
     }
 
     return {

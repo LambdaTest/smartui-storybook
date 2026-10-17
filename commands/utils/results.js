@@ -91,6 +91,7 @@ function finishRun(reason, statusData, buildId, options) {
             counts: summary.counts,
             screenshots: summary.rows
         };
+        if (options.onlyChangedResult) results.onlyChanged = options.onlyChangedResult;
         try {
             fs.writeFileSync(options.resultsFile, JSON.stringify(results, null, 2));
             console.log(`[smartui] Results written to ${options.resultsFile}`);
@@ -123,4 +124,26 @@ function finishRun(reason, statusData, buildId, options) {
     }
 }
 
-module.exports = { FAIL_ON_POLICIES, resolveFailOn, resolveResultsFile, summarise, policyFails, finishRun };
+// --only-changed had no story to capture or carry, so no build was created and the run passes
+function finishSkippedRun(options) {
+    if (!options.resultsFile) return;
+    const results = {
+        buildId: '',
+        buildName: '',
+        buildUrl: '',
+        baseline: false,
+        policy: options.failOn || 'none',
+        verdict: 'skipped',
+        counts: null,
+        screenshots: [],
+        onlyChanged: options.onlyChangedResult
+    };
+    try {
+        fs.writeFileSync(options.resultsFile, JSON.stringify(results, null, 2));
+        console.log(`[smartui] Results written to ${options.resultsFile}`);
+    } catch (error) {
+        console.log(`[smartui] Error: could not write results to ${options.resultsFile}: ${error.message}`);
+    }
+}
+
+module.exports = { FAIL_ON_POLICIES, resolveFailOn, resolveResultsFile, summarise, policyFails, finishRun, finishSkippedRun };

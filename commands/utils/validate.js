@@ -112,6 +112,26 @@ async function validateLatestBuild(options) {
         });
 }
 
+// the build the next build will compare against, { buildId, commitId, branch }, or null when there is none or it cannot be read
+async function fetchBaselineBuild(options, commit) {
+    try {
+        const response = await httpClient.get(new URL(constants[options.env].SB_BUILD_VALIDATE_PATH, constants[options.env].BASE_URL).href, {
+            headers: {
+                projectToken: process.env.PROJECT_TOKEN
+            },
+            params: {
+                branch: commit.branch,
+                commitId: commit.shortHash,
+                baseline: 'true'
+            }
+        });
+        return (response.data && response.data.baseline) || null;
+    } catch (error) {
+        console.log(`[smartui] --only-changed: cannot read the project's baseline build: ${error.message}`);
+        return null;
+    }
+}
+
 function validateConfig(configFile) {
     // Verify config file exists
     if (!fs.existsSync(configFile)) {
@@ -356,6 +376,7 @@ module.exports = {
     validateStorybookUrl,
     validateStorybookDir,
     validateLatestBuild,
+    fetchBaselineBuild,
     validateConfig,
     validateConfigBrowsers,
     validateConfigResolutions,
